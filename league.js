@@ -11,10 +11,24 @@ var league = function() {
 		this.table.push(addClubs);
 	}
 	this.gameDay =[];
+	this.gameDate =[];
 	this.currentGameDay = 0;
-	this.currentMonth = 0;
 	this.initleagueSchedule = function() {
-		//Hinrunde
+		var bufferDate = new Date(gameData.gameDate);
+		bufferDate.setMonth(7);
+		bufferDate.setDate(1);
+		var preseasonOffset = 21;
+		var winterOffset = 0;
+		//Dates of the matches
+		for (i=0; i<((this.clubs.length-1)*2); i++) {
+			this.gameDate[i] = new Date(bufferDate);
+			//Winter break			
+			if (i == 17) {
+				winterOffset = 31;
+			}
+			this.gameDate[i].setDate(bufferDate.getDate() + (7*i) + (6-bufferDate.getDay()) + preseasonOffset + winterOffset);
+		}
+		//Matches
 		for (i=0; i<((this.clubs.length/2)); i++) {
 			if (i%2 ==0) {
 				this.gameDay.push([[0,(1+2*i)%18],[2,(3+2*i)%18],[4,(5+2*i)%18],[6,(7+2*i)%18],[8,(9+2*i)%18],[10,(11+2*i)%18],[12,(13+2*i)%18],[14,(15+2*i)%18],[16,(17+2*i)%18]]);
@@ -52,7 +66,18 @@ var league = function() {
 		}
 		return tableString;
 	}
+	this.nextSeason = function() {
+		this.currentGameDay = 0;
+		this.initleagueSchedule();
+		for (pClub = 0; pClub < this.table.length; pClub++) {
+			gameData.league.clubs[gameData.league.table[pClub]].leaguePoints = 0;
+			gameData.league.clubs[gameData.league.table[pClub]].leagueGoalsScored = 0;
+			gameData.league.clubs[gameData.league.table[pClub]].leagueGoalsConceded = 0;
+			gameData.league.clubs[gameData.league.table[pClub]].nextSeason();
+		}
+	}
 	this.initleagueSchedule();
+	console.log(this);
 }
 
 //leagues
@@ -78,8 +103,5 @@ function leagueSort (a, b){
 
 
 
-function newMonth() {
-	gameData.league.currentMonth++;
-	console.log(gameData.league.currentMonth);
-};
+
 

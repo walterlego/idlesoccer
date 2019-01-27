@@ -6,19 +6,33 @@
 //game start
 function setUp() {	
 	gameData.loop = window.setInterval(updateFrame, 250);
-	gameData.startUpTime = new Date();
-	gameData.nextGameDay = gameData.startUpTime + PRESEASON;
+	gameData.dateLoop = window.setInterval(nextDay, 1000);
+	gameData.startUpTime = new Date().getTime();
 	gameData.lastCircle = gameData.startUpTime;
-	var savegame = JSON.parse(localStorage.getItem("idleSoccerSave"))
-	if (savegame !== null) {
-		console.log(savegame);
-		gameData = savegame;
-	} else {
+	//var savegame = JSON.parse(localStorage.getItem("idleSoccerSave"))
+	//if (savegame !== null) {
+		//console.log(savegame);
+		//gameData = savegame;
+	//} else {
 		gameData.player = new player(true);
 		gameData.league = new league();
-	}
+	//}
 	document.getElementById("mainMenu").innerHTML = initGUI();
 };
+
+function nextDay() {
+	gameData.gameDate.setDate(gameData.gameDate.getDate() + 1);
+	//console.log(gameData.gameDate.getTime()-gameData.league.gameDate[gameData.league.currentGameDay].getTime());
+	console.log(gameData.league.currentGameDay);
+	if (gameData.league.gameDate[gameData.league.currentGameDay].getTime() == gameData.gameDate.getTime()) {
+		gameDay();
+	}
+	if (gameData.league.currentGameDay == 33) {
+		if (gameData.gameDate.getMonth() == 7) {
+			gameData.league.nextSeason();
+		}
+	}
+}
 
 
 
@@ -27,10 +41,7 @@ function updateFrame() {
 	gameData.frameTime = gameData.currentCircle-gameData.lastCircle;
 	gameData.player.update();
 	gui = "";
-	//State Liga, Sommer/Winterpause
-	if (gameData.currentCircle > gameData.nextGameDay) {
-		gameDay();
-	}
+	document.getElementById("headLine").innerHTML = printGameDate();
 	if (client.gui == CLUB) {
 	//Build html of game
 		gui += renderClubMenu();
@@ -122,10 +133,29 @@ function mUp(obj) {
 	}	
 }
 
+
+/////////////////////
+//TIMEKEEPING
+/////////////////////
+
+Date.prototype.addDays = function(days) {
+    var date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+}
+
+Date.prototype.addMinutes = function(minutes) {
+    var date = new Date(this.valueOf());
+    date.setDate(date.getMinutes() + minutes);
+    return date;
+}
+
+
+
 function printGameDate() {
-	var dateString = "";
+	var dateString = weekDay[gameData.gameDate.getDay()] + ", ";
 	dateString += gameData.gameDate.getDate()+".";
-	dateString += gameData.gameDate.getMonth()+".";
+	dateString += (gameData.gameDate.getMonth()+1) + ".";
 	dateString += gameData.gameDate.getFullYear();
 	return dateString;
 }

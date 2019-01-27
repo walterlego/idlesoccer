@@ -53,6 +53,12 @@ var club = function(isHuman) {
 	this.leaguePoints = 0;
 	this.leagueGoalsConceded = 0;
 	this.leagueGoalsScored = 0;
+	this.nextSeason = function() {
+		this.leaguePoints = 0;
+		this.leagueGoalsConceded = 0;
+		this.leagueGoalsScored = 0;
+		this.team.nextSeason();
+	}
 	this.printTable = function() {
 		return (this.name + " " + this.leaguePoints + " " + this.leagueGoalsScored + " " + this.leagueGoalsConceded);
 	}

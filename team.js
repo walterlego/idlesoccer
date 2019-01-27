@@ -163,6 +163,11 @@ var team = function(isHuman) {
 		formationString = formationString.substring(0, formationString.length - 3);
 		return formationString;
 	};
+	this.nextSeason = function() {
+		for (iterPlayers = 0; iterPlayers < this.players.length; iterPlayers++) {
+			this.players[iterPlayers].age++;
+		}
+	}
 	return this;
 };
 
@@ -238,17 +243,18 @@ function renderPlayerTraining(rPlayer) {
 	//mainMenuString = renderTeamMenu();
 	mainMenuString = sectionStart;
 	mainMenuString += colStart;
-	mainMenuString += "<div id=\"selectSingleKicker\" value="+ rPlayer.playerId + "><strong>" + rPlayer.firstname + " " + rPlayer.lastname + "</strong></div><br />Position: " + positionNames[rPlayer.position];
+	mainMenuString += "<div id=\"selectSingleKicker\" value="+ rPlayer.playerId + "><strong>" + rPlayer.firstname + " " + rPlayer.lastname + "</strong></div>";
+	mainMenuString += colEnd;
+	mainMenuString += colStart;
+	mainMenuString += "Position: " + positionNames[rPlayer.position] + "<br />Alter: " + rPlayer.age;
 	mainMenuString += colEnd;
 	mainMenuString += colStart;
 	mainMenuString +=  	Math.round(rPlayer.defense*rPlayer.skill*10000)/100 + "% defensiv" + "<br />" + 
 						Math.round((1-rPlayer.defense)*rPlayer.skill*10000)/100 + "% offensiv";
 	mainMenuString += colEnd;
+
 	mainMenuString += colStart;
 	mainMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"switchTrainingFocus\" value="+ rPlayer.playerId + " >" + trainingFocus[rPlayer.trainingFocus-1] + "</button>";
-	mainMenuString += colEnd;
-	mainMenuString += colStart;
-	mainMenuString += rPlayer.renderDefense() + "<br />" + rPlayer.renderOffense();
 	mainMenuString += colEnd;
 	mainMenuString += sectionEnd;
 	return mainMenuString;

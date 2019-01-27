@@ -1,27 +1,13 @@
 function gameDay() {
-	if (gameData.league.currentGameDay < 34) {
-		if (gameData.league.currentGameDay == 0) {
-			newMonth();
-		}
-		if (gameData.league.currentGameDay % 3 == 0) {
-			newMonth();
-		}
+	if (gameData.league.currentGameDay < 33) {
 		console.log("Spieltag: "+ (gameData.league.currentGameDay+1));
 		for (iMatch = 0; iMatch < gameData.league.gameDay[gameData.league.currentGameDay].length; iMatch++) {
 			match(gameData.league.gameDay[gameData.league.currentGameDay][iMatch][0],gameData.league.gameDay[gameData.league.currentGameDay][iMatch][1]);
 		}
-		nextGameDay += GAMEDAY;
 		gameData.league.currentGameDay++;
 		gameData.league.table.sort(leagueSort);
-		document.getElementById("debug_output").innerHTML = printGameDate()+"<br />";
-		document.getElementById("debug_output").innerHTML += gameData.league.printleagueTable();
-	} else if (gameData.league.currentGameDay == 34) {	//Saisonende
-		gameData.league.table.sort(leagueSort);
-		console.log(gameData.league);
-		gameData.league.printleagueTable();
-		gameData.league.currentGameDay++;
-		document.getElementById("debug_output").innerHTML = printGameDate()+"<br />";
-		document.getElementById("debug_output").innerHTML += gameData.league.printleagueTable();
+		//document.getElementById("debug_output").innerHTML += printGameDate()+"<br />";
+		//document.getElementById("debug_output").innerHTML += gameData.league.printleagueTable();
 	}
 };
 

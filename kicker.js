@@ -10,7 +10,7 @@ var kicker = function(rueckenNummer) {
 	this.playerId = gameData.playerId;
 	this.trainingFocus = MIDFIELD;
 	this.getDefense = function() {
-	var cDefense = this.defense;
+		var cDefense = this.defense;
 		if (this.position == KEEPER){
 			cDefense*=1.8;
 		} else if (this.position == DEFENCE){

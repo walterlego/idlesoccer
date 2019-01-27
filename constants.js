@@ -32,10 +32,15 @@ var INJURED			= 6;
 
 
 //Timekeeping
-var PRESEASON = 0;//100000;	//120000
-var GAMEDAY = 7500; 	//120000
+var PRESEASON = 120000;	//120000
+var GAMEDAY = 7000; 	//120000
 
-var gameMonths =[];
+//New season
+var GRADUATE 	= 0;
+var STAY 		= 1;
+var RELEGATE 	= 2;
+
+
 
 
 //CLUB

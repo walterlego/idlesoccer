@@ -8,11 +8,12 @@ var gameData = {
 	newTeamId: 0,
 	loop: 0
 }
-
+/*
 var saveGameLoop = window.setInterval( function() { 
 	localStorage.setItem('idleSoccerSave', JSON.stringify(gameData));
 	console.log("game saved");
 	}, 15000);
+*/
 
 //strings
 var mainMenu_bar ="";
@@ -43,7 +44,7 @@ var productionRate = 0;
 var productionModifier = 0;
 var lastGameDay = 0;
 var nextGameDay = 0;
-gameData.gameDate = new Date(1960, 08, 24);
+gameData.gameDate = new Date(1963, 07, 1, 15);
 
 
 
