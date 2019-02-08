@@ -1,6 +1,6 @@
 function gameDay() {
 	if (gameData.league.currentGameDay < 33) {
-		console.log("Spieltag: "+ (gameData.league.currentGameDay+1));
+		//console.log("Spieltag: "+ (gameData.league.currentGameDay+1));
 		for (iMatch = 0; iMatch < gameData.league.gameDay[gameData.league.currentGameDay].length; iMatch++) {
 			match(gameData.league.gameDay[gameData.league.currentGameDay][iMatch][0],gameData.league.gameDay[gameData.league.currentGameDay][iMatch][1]);
 		}
@@ -20,8 +20,6 @@ function match(clubA, clubB) {
 	var allPosession = possessionA + possessionB;
 	possessionA /= allPosession;
 	possessionB /= allPosession;
-	//console.log("PossessionA: " + possessionA);
-	//console.log("PossessionB: " + possessionB);
 	var goalsA = (possessionA+getTeamOffense(gameData.league.clubs[clubA].team))*Math.random()-(getTeamDefense(gameData.league.clubs[clubB].team)*Math.random());
 	if (goalsA > 0) {
 		goalsA = Math.floor(goalsA);
@@ -34,24 +32,6 @@ function match(clubA, clubB) {
 	} else {
 		goalsB = 0;
 	}
-	
-	
-	/*
-	
-	var KEEPER			= 0;
-	var DEFENCE			= 1;
-	var MIDFIELD		= 2;
-	var STRIKER			= 3;
-	
-	
-	
-	var gameTime = 90;
-	var ballPossenssion = (Math.floor(Math.random() * 2) == 0) ? clubA : clubB;
-	var gameZone = MIDFIELD;
-	while (gameTime < 90) {
-		
-	}
-	*/
 	gameData.league.clubs[clubA].leagueGoalsConceded += goalsB;
 	gameData.league.clubs[clubA].leagueGoalsScored += goalsA;
 	gameData.league.clubs[clubB].leagueGoalsConceded  += goalsA;
@@ -65,5 +45,5 @@ function match(clubA, clubB) {
 		gameData.league.clubs[clubA].leaguePoints += 1;
 		gameData.league.clubs[clubB].leaguePoints += 1;
 	}
-	console.log(gameData.league.clubs[clubA].name + " - " + gameData.league.clubs[clubB].name + " " + goalsA + ":" + goalsB);
+	//console.log(gameData.league.clubs[clubA].name + " - " + gameData.league.clubs[clubB].name + " " + goalsA + ":" + goalsB);
 };

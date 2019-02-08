@@ -1,12 +1,21 @@
 var kicker = function(rueckenNummer) {
 	this.defense= Math.random();
 	this.skill = (Math.random() + Math.random()) / 2;	//Ligafaktor einbauen
+	this.talent = (Math.random() + Math.random()) / 2;	//Ligafaktor einbauen
 	this.position = NOTNOMINATED;
 	this.rueckenNummer = -1;
-	this.age= Math.floor(Math.random()*20)+17;
+	if (rueckenNummer > -1) {
+		this.age= Math.floor(Math.random()*20)+17;
+	} else {
+		this.age= Math.floor(Math.random()*4)+16;
+	}
 	this.exp= 1;
 	this.firstname = firstNames[Math.floor(Math.random()*firstNames.length)];
 	this.lastname = lastNames[Math.floor(Math.random()*lastNames.length)];
+	this.contractDuration = 2;
+	this.autoextendContract = true;
+	this.salary = 0;
+	this.value = 0;
 	this.playerId = gameData.playerId;
 	this.trainingFocus = MIDFIELD;
 	this.getDefense = function() {
@@ -93,6 +102,32 @@ var kicker = function(rueckenNummer) {
 			this.trainingFocus = DEFENCE;
 		}
 	};
+	this.training = function() {
+		if (this.trainingFocus == DEFENCE) {
+			this.defense *= (1+(gameData.player.club.coach*TRAININGEFFECTIVITY*(REFERENCEAGE/this.age)*POSITIONVSSKILL));
+			if (this.defense > 1) {
+				this.defense = 1;
+			}
+			this.skill *= POSITIONVSSKILL*Math.pow(gameData.player.club.coach*((AGEBALANCING+REFERENCEAGE)/(this.age+AGEBALANCING)),(TRAININGEFFECTIVITY*this.talent));
+		} else if (this.trainingFocus == STRIKER) {
+			this.defense *= (1-(gameData.player.club.coach*TRAININGEFFECTIVITY*(REFERENCEAGE/this.age)*POSITIONVSSKILL));
+			if (this.defense < 0) {
+				this.defense = 0;
+			}
+			this.skill *= Math.pow(gameData.player.club.coach*((AGEBALANCING+REFERENCEAGE)/(this.age+AGEBALANCING)),(TRAININGEFFECTIVITY*this.talent)*POSITIONVSSKILL);
+		} else if (this.trainingFocus == MIDFIELD) {
+			var pre = this.talent;
+			this.skill *= Math.pow(gameData.player.club.coach*((AGEBALANCING+REFERENCEAGE)/(this.age+AGEBALANCING)),(TRAININGEFFECTIVITY*this.talent));
+			//console.log("TRAINING age " + this.talent + " diff: " + ((this.talent - pre)/this.talent));
+		}
+	};
+	this.match = function() {
+		if (this.position < BENCH) {
+			var pre = this.skill;
+			this.skill *= Math.pow(gameData.player.club.coach*((AGEBALANCING+REFERENCEAGE)/(this.age+AGEBALANCING)*((LEAGUEBALANCING+16)/(gameData.league.level+LEAGUEBALANCING))),TRAININGEFFECTIVITY*this.talent);
+			//console.log("GAME age " + this.age + " diff: " + ((this.skill - pre)/this.skill));
+		}
+	};
 	this.playDefense = this.getDefense();
 	this.playOffense = this.getOffense();
 	this.playmaking = this.getPlaymaking();
@@ -101,7 +136,7 @@ var kicker = function(rueckenNummer) {
 		//mainMenuString = renderTeamMenu();
 		mainMenuString = sectionStart;
 		mainMenuString += colStart;
-		mainMenuString += "<div id=\"selectSingleKicker\" value="+ this.playerId + "><strong>" + this.firstname + " " + this.lastname + "</strong></div><br />Alter: " + this.age;
+		mainMenuString += "<div id=\"selectSingleKicker\" value="+ this.playerId + "><strong>" + this.firstname + " " + this.lastname + "</strong><br />Talent: " +  Math.round(this.talent*10000)/100 + "<br />Alter: " + this.age + "</div>";
 		mainMenuString += colEnd;
 		mainMenuString += colStart;
 		mainMenuString +=  	Math.round(this.defense*this.skill*10000)/100 + "% defensiv" + "<br />" + 
@@ -115,6 +150,34 @@ var kicker = function(rueckenNummer) {
 		mainMenuString += colEnd;
 		mainMenuString += sectionEnd;
 		return mainMenuString;
+	};
+	this.nextSeason = function() {
+		this.contractDuration--;
+		if (this.contractDuration == 0) {
+			if (this.autoextendContract == true) {
+				if ((Math.random()*0.35)*(this.age-29)<1) {	//=($A3-29)*(0,35*B$2)
+					this.extendContract();
+					this.age++;
+				} else {
+					console.log(this.firstname + this.lastname +" geht mit "+ this.age + " in Rente.");
+					return -1;
+				}
+			}
+		}
+	};
+	this.extendContract = function() {
+		this.salary = this.skill;
+		console.log(this.salary);
+		this.value = (this.skill*100) / Math.pow(this.age,2);
+		console.log(this.value);
+		this.contractDuration += 2;
+	};
+	this.extendContractConfirmation = function() {
+		this.salary = this.skill;
+		console.log(this.salary);
+		this.value = (this.skill*100) / Math.pow(this.age,2);
+		console.log(this.value);
+		this.contractDuration += 2;
 	};
 	gameData.playerId++;
 };
@@ -170,4 +233,42 @@ function getPlaymaking(getKicker) {
 
 function setSingleKickerMenu(pPlayer) {
 	return "klappt";
+}
+
+function renderPlayerContract(rPlayer) {
+	//console.log(rPlayer);
+	//mainMenuString = renderTeamMenu();
+	mainMenuString = sectionStart;
+	mainMenuString += colStart;
+	mainMenuString += "<div id=\"selectSingleKicker\" value="+ rPlayer.playerId + "><strong>" + rPlayer.firstname + " " + rPlayer.lastname + "</strong><br />Position: " + positionNames[rPlayer.position] + "<br />Alter: " + rPlayer.age + "</div>";
+	mainMenuString += colEnd;
+	mainMenuString += colStart;
+	mainMenuString +=  	Math.round(rPlayer.defense*rPlayer.skill*10000)/100 + "% defensiv" + "<br />" + 
+						Math.round((1-rPlayer.defense)*rPlayer.skill*10000)/100 + "% offensiv";
+	mainMenuString += colEnd;
+	mainMenuString += colStart;
+	mainMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"extendContract\" value="+ rPlayer.playerId + " >" + "Extend contract" + "</button>";
+	mainMenuString += colEnd;
+	mainMenuString += colStart;
+	mainMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"cancelContract\" value="+ rPlayer.playerId + " >" + "Cancel contract" + "</button>";
+	mainMenuString += colEnd;
+	mainMenuString += sectionEnd;
+	return mainMenuString;
+};
+
+function renderCancelContract() {
+	mainMenuString = renderTeamMenu();
+	mainMenuString += sectionStart;
+	mainMenuString += colStart;
+	mainMenuString += "<div id=\"selectSingleKicker\" value="+ gameData.player.club.team.players[client.value].playerId + "><strong>" + gameData.player.club.team.players[client.value].firstname + " " + gameData.player.club.team.players[client.value].lastname + "</strong><br />Position: " + positionNames[gameData.player.club.team.players[client.value].position] + "<br />Alter: " + gameData.player.club.team.players[client.value].age + "</div>";
+	mainMenuString += colEnd;
+	mainMenuString += colStart;
+	mainMenuString += Math.round(gameData.player.club.team.players[client.value].defense*gameData.player.club.team.players[client.value].skill*10000)/100 + "% defensiv" + "<br />" + 
+						Math.round((1-gameData.player.club.team.players[client.value].defense)*gameData.player.club.team.players[client.value].skill*10000)/100 + "% offensiv";
+	mainMenuString += colEnd;
+	mainMenuString += colStart;
+	mainMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"confirmCancelContract\" value="+ gameData.player.club.team.players[client.value].playerId + " >" + "Confirm contract cancellation" + "</button>";
+	mainMenuString += colEnd;
+	mainMenuString += sectionEnd;
+	return mainMenuString;
 }

@@ -100,10 +100,9 @@ var team = function(isHuman) {
 		newKicker = new kicker(j);
 		this.players.push(newKicker);
 	}
-	if(isHuman == false) {
+	if(this.isHuman == false) {
 		this.setTeamFormation();
 	}
-	//gameData.teams.push(this);
 	this.getTeamDefense = function () {
 		var teamDefense = 0;
 		for (i=0; i< this.players.length; i++) {
@@ -135,19 +134,19 @@ var team = function(isHuman) {
 	this.teamOffense = this.getTeamOffense();
 	this.playmaking = this.getTeamPlaymaking();
 	this.update = function() {
-		//Training
+		//empty
+	};
+	//Training
+	this.training = function() {
 		for (iterPlayers = 0; iterPlayers < this.players.length; iterPlayers++) {
-			if (this.players[iterPlayers].trainingFocus == DEFENCE) {
-				this.players[iterPlayers].defense *= (1+(gameData.player.club.coach*frameTime / 100000));
-				this.players[iterPlayers].skill *= (1+0.5*(gameData.player.club.coach*frameTime / 100000));
-			} else if (this.players[iterPlayers].trainingFocus == STRIKER) {
-				this.players[iterPlayers].defense *= (1-(gameData.player.club.coach*frameTime / 100000));
-				this.players[iterPlayers].skill *= (1+0.5*(gameData.player.club.coach*frameTime / 100000));
-			} else if (this.players[iterPlayers].trainingFocus == MIDFIELD) {
-				this.players[iterPlayers].skill *= (1+(gameData.player.club.coach*frameTime / 100000));
-			}
+			this.players[iterPlayers].training();
 		}
 	};
+	this.gameDay = function() {
+		for (iterPlayers = 0; iterPlayers < this.players.length; iterPlayers++) {
+			this.players[iterPlayers].match();
+		}
+	}
 	this.renderFormation = function () {
 		var formationString = "";
 		var perPosition = 0;
@@ -165,9 +164,32 @@ var team = function(isHuman) {
 	};
 	this.nextSeason = function() {
 		for (iterPlayers = 0; iterPlayers < this.players.length; iterPlayers++) {
-			this.players[iterPlayers].age++;
+			if (this.players[iterPlayers].nextSeason()<0) {	//player retires
+				console.log("Pre", this.players);
+				this.players.splice(iterPlayers, 1);
+				console.log("Post", this.players);
+			}
 		}
-	}
+		var addNumOfKickers = Math.round(Math.random()*3);
+		for (addPlayers = 0; addPlayers<addNumOfKickers; addPlayers++) {
+			this.addJuniorKicker();
+		}
+		if(this.isHuman == false) {
+			this.setTeamFormation();
+		}
+	};
+	this.firePlayer = function(firePlayer) {
+		for (iterPlayers = 0; iterPlayers < this.players.length; iterPlayers++) {
+			if (this.players[iterPlayers].playerId == firePlayer) {	//player retires
+				console.log("Pre", this.players);
+				this.players.splice(iterPlayers, 1);
+				console.log("Post", this.players);
+			}
+		}
+	};
+	this.addJuniorKicker = function() {
+		this.players.push(new kicker(-1));
+	};
 	return this;
 };
 
@@ -179,50 +201,12 @@ function setTeamMenu() {
 	//return teamMenuString;
 };
 
-function togglePosition(pPlayer) {
-	console.log("deprecated function: togglePosition");
-	/*
-	for (i = 0; i < gameData.player.club.team.players.length; i++) {
-		if (gameData.player.club.team.players[i].playerId == pPlayer){
-			if(gameData.player.club.team.players[i].position == KEEPER) {
-				gameData.player.club.team.players[i].position++;
-				gameData.player.club.team.hasKeeper = false;
-			} else if (gameData.player.club.team.players[i].position < NOTNOMINATED){
-				gameData.player.club.team.players[i].position++;
-				if (gameData.player.club.team.players[i].position == BENCH){
-					gameData.player.club.team.squadCount--;
-					this.benchCount++;
-				}
-			} else {
-				if (gameData.player.club.team.squadCount < 11) {
-					if (gameData.player.club.team.hasKeeper == false) {
-						gameData.player.club.team.players[i].position = KEEPER;
-						gameData.player.club.team.hasKeeper = true;
-						} else {
-							gameData.player.club.team.players[i].position = DEFENCE;
-						}
-					gameData.player.club.team.squadCount++;
-					this.benchCount--;
-					//
-				} else {
-					gameData.player.club.team.players[i].position = BENCH;
-					this.benchCount++;
-				}
-			}
-			gameData.player.club.team.players[i].playmaking = getPlaymaking(gameData.player.club.team.players[i]);
-			gameData.player.club.team.players[i].playDefense = gameData.player.club.team.players[i].getDefense();
-			gameData.player.club.team.players[i].playOffense = getOffense(gameData.player.club.team.players[i]);
-		}
-	}
-	*/
-};
-
 function renderPlayerFormation(rPlayer) {
 	//console.log(rPlayer);
 	//mainMenuString = renderTeamMenu();
 	mainMenuString = sectionStart;
 	mainMenuString += colStart;
-	mainMenuString += "<div id=\"selectSingleKicker\" value="+ rPlayer.playerId + "><strong>" + rPlayer.firstname + " " + rPlayer.lastname + "</strong></div><br />Alter: " + rPlayer.age;
+	mainMenuString += "<div id=\"selectSingleKicker\" value="+ rPlayer.playerId + "><strong>" + rPlayer.firstname + " " + rPlayer.lastname + "</strong><br />Talent: " +  Math.round(rPlayer.talent*10000)/100 + "<br />Alter: " + rPlayer.age + "</div>";
 	mainMenuString += colEnd;
 	mainMenuString += colStart;
 	mainMenuString +=  	Math.round(rPlayer.defense*rPlayer.skill*10000)/100 + "% defensiv" + "<br />" + 
@@ -243,16 +227,12 @@ function renderPlayerTraining(rPlayer) {
 	//mainMenuString = renderTeamMenu();
 	mainMenuString = sectionStart;
 	mainMenuString += colStart;
-	mainMenuString += "<div id=\"selectSingleKicker\" value="+ rPlayer.playerId + "><strong>" + rPlayer.firstname + " " + rPlayer.lastname + "</strong></div>";
+	mainMenuString += "<div id=\"selectSingleKicker\" value="+ rPlayer.playerId + "><strong>" + rPlayer.firstname + " " + rPlayer.lastname + "</strong><br />Talent: " +  Math.round(rPlayer.talent*10000)/100 + "<br />Alter: " + rPlayer.age + "</div>";
 	mainMenuString += colEnd;
 	mainMenuString += colStart;
-	mainMenuString += "Position: " + positionNames[rPlayer.position] + "<br />Alter: " + rPlayer.age;
-	mainMenuString += colEnd;
-	mainMenuString += colStart;
-	mainMenuString +=  	Math.round(rPlayer.defense*rPlayer.skill*10000)/100 + "% defensiv" + "<br />" + 
+	mainMenuString += Math.round(rPlayer.defense*rPlayer.skill*10000)/100 + "% defensiv" + "<br />" + 
 						Math.round((1-rPlayer.defense)*rPlayer.skill*10000)/100 + "% offensiv";
 	mainMenuString += colEnd;
-
 	mainMenuString += colStart;
 	mainMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"switchTrainingFocus\" value="+ rPlayer.playerId + " >" + trainingFocus[rPlayer.trainingFocus-1] + "</button>";
 	mainMenuString += colEnd;
@@ -266,10 +246,13 @@ function renderTeamMenu() {
 	renderTeamMenuString = ""
 	renderTeamMenuString = sectionStart;
 	renderTeamMenuString += colStart;
-	renderTeamMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"switchToFormation\">Aufstellung</button>";
+	renderTeamMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"switchToFormation\">Formation</button>";
 	renderTeamMenuString += colEnd;
 	renderTeamMenuString += colStart;
 	renderTeamMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"switchToTraining\">Training</button>";
+	renderTeamMenuString += colEnd;
+	renderTeamMenuString += colStart;
+	renderTeamMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"switchToTeamContracts\">Contracts</button>";
 	renderTeamMenuString += colEnd;
 	renderTeamMenuString += sectionEnd;
 	return renderTeamMenuString;
@@ -278,13 +261,13 @@ function renderTeamMenu() {
 function renderTeamFormation() {
 	renderTeamString = renderTeamMenu();
 	renderTeamString += colStart;
-	renderTeamString += "<strong>" + gameData.player.club.name + "</strong>";
+	renderTeamString += "Spielstärke: " + getTeamPlaymaking(gameData.player.club.team);
 	renderTeamString += colEnd;
 	renderTeamString += colStart;
-	renderTeamString += "Spielstärke: <br />" + getTeamPlaymaking(gameData.player.club.team);
+	renderTeamString += "Defensiv: " + gameData.player.club.team.getTeamDefense()+ "<br />";
 	renderTeamString += colEnd;
 	renderTeamString += colStart;
-	renderTeamString += "Defensiv: " + gameData.player.club.team.getTeamDefense()+ "<br />" + "Offensiv: " + gameData.player.club.team.getTeamOffense();
+	renderTeamString += "Offensiv: " + gameData.player.club.team.getTeamOffense();
 	renderTeamString += colEnd;
 	renderTeamString += sectionEnd;
 	renderTeamString += sectionStart;
@@ -293,9 +276,7 @@ function renderTeamFormation() {
 	renderTeamString += colEnd;
 	renderTeamString += sectionEnd;
 	for (i=0; i< gameData.player.club.team.players.length; i++) {
-		//if (gameData.player.club.team.players[i].rueckenNummer == i){
-			renderTeamString += gameData.player.club.team.players[i].renderPlayerFormation();
-		//}
+		renderTeamString += gameData.player.club.team.players[i].renderPlayerFormation();
 	}
 	return renderTeamString;
 };
@@ -303,9 +284,6 @@ function renderTeamFormation() {
 function renderTeamTraining() {
 	renderTeamString = renderTeamMenu();
 	renderTeamString += sectionStart;
-	renderTeamString += colStart;
-	renderTeamString += "<strong>" + gameData.player.club.name + "</strong>";
-	renderTeamString += colEnd;
 	renderTeamString += colStart;
 	renderTeamString += "Spielstärke: <br />" + getTeamPlaymaking(gameData.player.club.team);
 	renderTeamString += colEnd;
@@ -323,6 +301,16 @@ function renderTeamTraining() {
 	}
 	return renderTeamString;
 };
+
+function renderTeamContracts() {
+	renderTeamString = renderTeamMenu();
+	for (i=0; i< gameData.player.club.team.players.length; i++) {
+		renderTeamString += renderPlayerContract(gameData.player.club.team.players[i]);
+	}
+	return renderTeamString;
+};
+
+
 
 function getTeamPlaymaking(gTeam) {
 	var teamPlaymaking = 0;

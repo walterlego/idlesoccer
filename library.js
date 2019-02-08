@@ -5,8 +5,8 @@
 
 //game start
 function setUp() {	
-	gameData.loop = window.setInterval(updateFrame, 250);
-	gameData.dateLoop = window.setInterval(nextDay, 1000);
+	gameData.loop = window.setInterval(updateFrame, FRAMERATE);
+	gameData.dateLoop = window.setInterval(nextDay, GAMEDAY);
 	gameData.startUpTime = new Date().getTime();
 	gameData.lastCircle = gameData.startUpTime;
 	//var savegame = JSON.parse(localStorage.getItem("idleSoccerSave"))
@@ -22,10 +22,14 @@ function setUp() {
 
 function nextDay() {
 	gameData.gameDate.setDate(gameData.gameDate.getDate() + 1);
-	//console.log(gameData.gameDate.getTime()-gameData.league.gameDate[gameData.league.currentGameDay].getTime());
-	console.log(gameData.league.currentGameDay);
+	//sell Tickets
+	gameData.player.club.ticketUpdate();
+	//Game day
 	if (gameData.league.gameDate[gameData.league.currentGameDay].getTime() == gameData.gameDate.getTime()) {
 		gameDay();
+	} else {
+		//Training
+		gameData.player.club.team.training();
 	}
 	if (gameData.league.currentGameDay == 33) {
 		if (gameData.gameDate.getMonth() == 7) {
@@ -41,7 +45,7 @@ function updateFrame() {
 	gameData.frameTime = gameData.currentCircle-gameData.lastCircle;
 	gameData.player.update();
 	gui = "";
-	document.getElementById("headLine").innerHTML = printGameDate();
+	document.getElementById("headLine").innerHTML = "<strong>" + gameData.player.club.name + "</strong> " + printGameDate();
 	if (client.gui == CLUB) {
 	//Build html of game
 		gui += renderClubMenu();
@@ -56,8 +60,12 @@ function updateFrame() {
 		gui += renderTeamFormation();
 	} else if (client.gui == TEAMTRAINING){
 		gui += renderTeamTraining();
+	}  else if (client.gui == TEAMCONTRACTS){
+		gui += renderTeamContracts();
 	} else if (client.gui == MARKETING){
 		gui += renderClubMenu();
+	} else if (client.gui == CANCELCONTRACT){
+		gui += renderCancelContract();
 	}
 	document.getElementById("game").innerHTML = gui;
 	document.getElementById("debug_output").innerHTML = gameData.league.printleagueTable(); 
@@ -102,7 +110,7 @@ function setTopMenu() {
 //click handler
 function mUp(obj) {
 	if (obj.id == "sellTicket"){
-		gameData.player.sellTicket();
+		gameData.player.club.sellTicket();
 	} else if (obj.id == "switchToClub"){
 		client.gui = CLUB;
 	} else if (obj.id == "switchToTeam"){
@@ -122,12 +130,30 @@ function mUp(obj) {
 		client.gui = FORMATION;
 	} else if (obj.id == "switchToTraining"){
 		client.gui = TEAMTRAINING;
+	} else if (obj.id == "switchToTeamContracts"){
+		client.gui = TEAMCONTRACTS;
 	} else if (obj.id == "switchTrainingFocus"){
 		for (i = 0; i < gameData.player.club.team.players.length; i++) {
 			if (gameData.player.club.team.players[i].playerId == obj.value){
 				gameData.player.club.team.players[i].toggleTrainingFocus();
 			}
 		}
+	} else if (obj.id == "cancelContract"){
+		for (i = 0; i < gameData.player.club.team.players.length; i++) {
+			if (gameData.player.club.team.players[i].playerId == obj.value) {
+				client.value = i;
+			}
+		}
+		client.gui = CANCELCONTRACT;		
+	} else if (obj.id == "confirmCancelContract"){
+		for (i = 0; i < gameData.player.club.team.players.length; i++) {
+			console.log(gameData.player.club.team.players[i].playerId);
+		}
+		gameData.player.club.team.firePlayer(client.value);
+		for (i = 0; i < gameData.player.club.team.players.length; i++) {
+			console.log(gameData.player.club.team.players[i].playerId);
+		}
+		client.gui = TEAMCONTRACTS;		
 	} else if (obj.id == "switchToMarketing"){
 		client.gui = MARKETING;
 	}	

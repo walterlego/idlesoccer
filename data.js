@@ -52,7 +52,8 @@ gameData.gameDate = new Date(1963, 07, 1, 15);
 //client
 
 var client = {
-	gui: CLUB
+	gui: CLUB,
+	value: 0
 };
 
 var leagueNames = [

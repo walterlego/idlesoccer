@@ -2,6 +2,7 @@
 
 
 var league = function() {
+	this.level = 3;
 	this.name = "Kreisliga D";
 	this.clubs = [];
 	this.table=[];

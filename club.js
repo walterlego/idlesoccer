@@ -18,24 +18,22 @@ var club = function(isHuman) {
 		if (this.cash >= ticketVendorPrice[this.ticketVendor]) {
 			this.cash -= ticketVendorPrice[this.ticketVendor];
 			this.ticketVendor++;
-			if (this.ticketVendor == 0) {
-				this.ticketVendorRate += TICKETVENDORRATE;
-			}
+			this.ticketVendorRate++;
 		}
 	}
 	this.sellTicket = function() {
-		if (this.stadium.ticketsSold < this.club.stadium.capacity) {
+		if (this.stadium.ticketsSold < this.stadium.capacity) {
 			this.stadium.capacity;
 			this.stadium.ticketsSold++;
-			this.cash += this.club.stadium.ticketPrice;
+			this.cash += this.stadium.ticketPrice;
 			console.log("Verkauf");
 		}
 	}
 	this.ticketUpdate = function () {
 		if (this.stadium.ticketsSold < this.stadium.capacity) {
-			if (this.ticketVendor * (gameData.frameTime / 100000) < (this.stadium.capacity - this.stadium.ticketsSold)) {
-				this.stadium.ticketsSold += this.ticketVendor * (gameData.frameTime / 100000);
-				this.cash += this.stadium.ticketPrice * this.ticketVendor * (gameData.frameTime / 100000);
+			if (this.ticketVendorRate < (this.stadium.capacity - this.stadium.ticketsSold)) {
+				this.stadium.ticketsSold += Math.pow(this.ticketVendorRate,TICKETVENDOREXPONENT);
+				this.cash += this.stadium.ticketPrice * this.ticketVendorRate;
 			} else {
 				this.cash += this.stadium.ticketPrice * (this.stadium.capacity- this.stadium.ticketsSold);
 				this.stadium.ticketsSold = this.stadium.capacity;
@@ -43,12 +41,13 @@ var club = function(isHuman) {
 		}
 	}
 	this.gameDay = function() {
+		this.team.gameDay();
 	}
 	this.gameDayHome = function() {
 		this.stadium.ticketsSold = 0;
 	}
 	this.team = new team(isHuman);
-	this.coach = 0.000001;
+	this.coach = 1;
 	//Ligatsatistik
 	this.leaguePoints = 0;
 	this.leagueGoalsConceded = 0;
