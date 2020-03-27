@@ -1,50 +1,43 @@
 var stadium = function() {
 	this.capacity = 100;
-	this.ticketsSold = 0;
-	this.ticketPrice = 1;
-	this.upgradeSeating = function() {
-	};
+	this.seatsSold = 0;
+	this.terraceOccupation = [0, 0, 0, 0];
+	this.terraces = [ 100, 0, 0, 0];
+	this.terraceComfort = [0, 0, 0, 0];
+	this.seatsToAssign = 0;
+	this.logOccupation = [];
+	this.averageOccupation = 0;
 };
 
-function setStadiumMenu() {
+function updateseatsToAssign (ticketStadium) {
+	//console.log(ticketStadium);
+	ticketStadium.seatsSold = ticketStadium.terraceOccupation[0];
+	for (updateC = 1; updateC < 4; updateC++) {
+		ticketStadium.seatsSold += ticketStadium.terraceOccupation[updateC];
+	}
+};
 	
-	//console.log("setStadiumMenu");
-	mainMenuString = sectionStart;
-	mainMenuString += colStart;
-	mainMenuString += "<strong>Stadion</strong>";
-	mainMenuString += colEnd;
-	mainMenuString += sectionEnd;
-	mainMenuString += sectionStart;
-	mainMenuString += colStart;
-	mainMenuString += "Stadionkapazität "+ gameData.player.club.stadium.capacity;//player.stadium.ticketsSold;
-	mainMenuString += colEnd;
-	mainMenuString += colStart;
-	mainMenuString += "Plätze frei: " + (gameData.player.club.stadium.capacity - gameData.player.club.stadium.ticketsSold) + " von " + gameData.player.club.stadium.capacity;
-	mainMenuString += colEnd;
-	mainMenuString += colStart;
-	mainMenuString += "Kontostand: " + gameData.player.club.cash + " €";
-	mainMenuString += colEnd;
 
-	mainMenuString += sectionEnd;
-	mainMenuString += sectionStart;
-	mainMenuString += colStart;
-	mainMenuString += "Aktueller Ticketpreis" + gameData.player.club.stadium.ticketPrice + " € <br />";
-	mainMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"sellTicket\">sell Ticket</button>";
-	mainMenuString += colEnd;
-	mainMenuString += colStart;
-	mainMenuString += "Nächste Verkaufsstelle: " + ticketVendorPrice[gameData.player.club.ticketVendor] + " € <br />";
-	mainMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"hireTicketVendor\">" + ticketVendorString[(gameData.player.club.ticketVendor +1)] + "</button>";
-	mainMenuString += colEnd;
-	mainMenuString += sectionEnd;
+function updateCapacity(capacityStadium) {
+	capacityStadium.capacity = capacityStadium.terraces[0];
+	for (updateC = 1; updateC < 4; updateC++) {
+	capacityStadium.capacity += capacityStadium.terraces[updateC];
+	}
+};		
 
-	return mainMenuString;
-};
+function stadiumGameDay(gStadium) {
+	//console.log("stadiumGameDay");
+	gStadium.terraceOccupation = [0, 0, 0, 0];
+	gStadium.seatsToAssign = 0;
+	gStadium.seatsSold = 0;
+}
 
 ticketVendorString = [
 	"keiner",
 	"Mutti",
 	"Uschis Kiosk",
 	"Alle Spielerfrauen",
+	"Vereinsheim",
 	"Noch ein Kiosk",
 	"Zeitschriftenhändler",
 	"Noch ein Zeitschriftenhändler",
@@ -62,7 +55,24 @@ ticketVendorPrice = [
 	12500,
 	18000,
 	25000,
-	50000
+	50000,
+	100000,
 ];
-	
-	
+
+terraceNameString = [
+	"Haupttrib&uuml;ne",
+	"Nordtrib&uuml;ne",
+	"Gegentrib&uuml;ne",	
+	"S&uuml;dtrib&uuml;ne"
+];
+
+terraceComfortString = [
+	"Wiese",
+	"Pflastersteine",
+	"M&uuml;lleimer",	
+	"Gel&auml;nder",
+	"Stehtstufen",
+	"Sitzschalen",
+	"",
+];
+

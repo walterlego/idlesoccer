@@ -1,87 +1,145 @@
 //library
 
-
-
-
 //game start
 function setUp() {	
 	gameData.loop = window.setInterval(updateFrame, FRAMERATE);
 	gameData.dateLoop = window.setInterval(nextDay, GAMEDAY);
+	
+	///////////////////////
+	// Pause code
+	///////////////////////
+	
+	/*	if (gameData.dateLoop === null) {
+			gameData.dateLoop = window.setInterval(nextDay, GAMEDAY);
+		} else {
+			clearInterval(gameData.dateLoop);
+			gameData.dateLoop = null;
+		}
+	*/
 	gameData.startUpTime = new Date().getTime();
 	gameData.lastCircle = gameData.startUpTime;
-	//var savegame = JSON.parse(localStorage.getItem("idleSoccerSave"))
-	//if (savegame !== null) {
-		//console.log(savegame);
-		//gameData = savegame;
-	//} else {
-		gameData.player = new player(true);
-		gameData.league = new league();
-	//}
-	document.getElementById("mainMenu").innerHTML = initGUI();
+	/*
+	var savegame = JSON.parse(localStorage.getItem("idleSoccerSave"))
+	if (savegame !== null) {
+		console.log("Lade Spiel");
+		console.log(savegame);
+		gameData = savegame;
+		loadGame();
+	} else {
+		*/
+		console.log("Setup");
+		gameData.player = new player();
+		initleagues();
+		/*
+	}
+	*/
+	document.getElementById("navBarClubName").innerHTML = gameData.player.club.name;
 };
+
+function nextMonth() {
+	for (lL=0; lL < gameData.leagues.length; lL++) {
+		for (lI=0; lI < gameData.leagues[lL].length; lI++) {
+			for (i=0; i < gameData.leagues[lL][lI].clubs.length; i++) {
+				clubNextMonth(gameData.leagues[lL][lI].clubs[i]);
+			}
+		}
+	}
+}
+
+function pauseGame() {
+	if (gameData.dateLoop === null) {
+		gameData.dateLoop = window.setInterval(nextDay, GAMEDAY);
+	} else {
+		clearInterval(gameData.dateLoop);
+		gameData.dateLoop = null;
+	}
+}
 
 function nextDay() {
 	gameData.gameDate.setDate(gameData.gameDate.getDate() + 1);
 	//sell Tickets
-	gameData.player.club.ticketUpdate();
-	//Game day
-	if (gameData.league.gameDate[gameData.league.currentGameDay].getTime() == gameData.gameDate.getTime()) {
-		gameDay();
-	} else {
-		//Training
-		gameData.player.club.team.training();
+	ticketUpdate(gameData.player.club);
+	//next month?
+	if (gameData.gameDate.getDate() ==1) {
+		nextMonth();
 	}
-	if (gameData.league.currentGameDay == 33) {
+	for (lL=0; lL < gameData.leagues.length; lL++) {
+		for (lI=0; lI < gameData.leagues[lL].length; lI++) {
+			gameData.currentLeague = gameData.leagues[lL][lI];
+			gameData.currentLeagueLevel = lL;
+			gameData.currentLeagueID = lI;
+			if (gameData.currentLeague.gameDate[gameData.currentLeague.currentGameDay].getDate() == gameData.gameDate.getDate()) {//.getTime() == gameData.gameDate.getTime()) {
+				//Game day
+				gameDay();
+				
+
+			} else {
+				//Training
+				trainingDay();
+				
+			}
+		}
+	}
+	if (gameData.currentLeague.currentGameDay == 33) {
 		if (gameData.gameDate.getMonth() == 7) {
-			gameData.league.nextSeason();
+			console.log("Saisonende");
+			console.log(gameData.leagues[gameData.player.leagueLevel][gameData.player.leagueID]);
+			
+			//Ligen abschließen, auf- und absteiger ermitteln und ablegen
+			leagueNextSeason();
 		}
 	}
 }
 
 
-
 function updateFrame() {
-	gameData.currentCircle = new Date();
-	gameData.frameTime = gameData.currentCircle-gameData.lastCircle;
-	gameData.player.update();
+	//gameData.currentCircle = new Date();
+	//gameData.frameTime = gameData.currentCircle-gameData.lastCircle;
 	gui = "";
-	document.getElementById("headLine").innerHTML = "<strong>" + gameData.player.club.name + "</strong> " + printGameDate();
+	document.getElementById("headLine").innerHTML = printStatusLine();//"<strong>" + gameData.player.club.name + "</strong> " + leagueNames[gameData.player.leagueLevel] + " " + gameData.player.leagueID + " " + printGameDate();
 	if (client.gui == CLUB) {
 	//Build html of game
-		gui += renderClubMenu();
+		gui += "";//renderClubMenu(gameData.player.club);
 	} else if (client.gui == TEAM){
 		//sortTeam();
-		gui += renderTeamFormation();
+		gui += renderTeamFormation(gameData.player.club.team);
 	} else if (client.gui == STADIUM){
-		gui += setStadiumMenu();
+		gui += setStadiumMenu(gameData.player.club);
 	} else if (client.gui == SINGLEKICKER){
-		gui += setSingleKickerMenu();
+		//gui += gameData.player.club.setSingleKickerMenu();
 	} else if (client.gui == FORMATION){
-		gui += renderTeamFormation();
+		gui += renderTeamFormation(gameData.player.club.team);
 	} else if (client.gui == TEAMTRAINING){
-		gui += renderTeamTraining();
+		gui += renderTeamTraining(gameData.player.club);
 	}  else if (client.gui == TEAMCONTRACTS){
-		gui += renderTeamContracts();
+		gui += renderTeamContracts(gameData.player.club.team);
+	} else if (client.gui == FINANCE){
+		gui += renderFinanceMenu(gameData.player.club);
 	} else if (client.gui == MARKETING){
-		gui += renderClubMenu();
+		gui += renderMarketingMenu(gameData.player.club);
 	} else if (client.gui == CANCELCONTRACT){
-		gui += renderCancelContract();
+		gui += renderCancelContract(gameData.player.club.team);
+	} else if (client.gui == PERSONNEL){
+		gui += renderStaffMenu(gameData.player.club);	//renderStaffMenu
+	} else if (client.gui == STATISTICS){
+		gui += renderStatisticsMenu(gameData.player.club);	//renderStaffMenu
 	}
 	document.getElementById("game").innerHTML = gui;
-	document.getElementById("debug_output").innerHTML = gameData.league.printleagueTable(); 
 };
 
 function initGUI() {
 	
+	//mainMenuString = "<nav class=\"navbar navbar-default fixed-top\"><div class=\"container-fluid\"><div class=\"navbar-header\"></div><ul class=\"nav navbar-nav\"><li class=\"active\"><a href=\"#\">Home</a></li><li><a href=\"#\">Page 1</a></li><li><a href=\"#\">Page 2</a></li><li><a href=\"#\">Page 3</a></li></ul></div></nav>";
+		
 	mainMenuString = sectionStart;
 	mainMenuString += colStart;
-	mainMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"switchToClub\">Verein</button>";
+	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"switchToClub\">Verein</button>";
 	mainMenuString += colEnd;
 	mainMenuString += colStart;
-	mainMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"switchToTeam\">Team</button>";
+	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"switchToTeam\">Team</button>";
 	mainMenuString += colEnd;
 	mainMenuString += colStart;
-	mainMenuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"switchToStadium\">Stadion</button>";
+	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"switchToStadium\">Stadion</button>";
 	mainMenuString += colEnd;
 	mainMenuString += sectionEnd;
 
@@ -89,28 +147,16 @@ function initGUI() {
 };
 
 
-function setTopMenu() {
-	
-	menuString = sectionStart;
-	menuString += colStart;
-	menuString += "setTopMenu";//"<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"createPlayer\">create Player</button>";
-	menuString += colEnd;
-	/*
-	menuString += colStart;
-	menuString += "<button class=\"regbtn\" onmouseup=\"mUp(this)\" id=\"switchPlayer\">switch Player</button>";
-	menuString += colEnd;
-	*/
-	menuString += sectionEnd;
-	
-	return menuString;
-}
 
+//////////////////////////////////////////
+////   CLICK HANDLER
+//////////////////////////////////////////
 
-
-//click handler
 function mUp(obj) {
-	if (obj.id == "sellTicket"){
-		gameData.player.club.sellTicket();
+	if (obj.id == "pauseGame"){
+		pauseGame();
+	} else if (obj.id == "sellTicket"){
+		clubSellTicket(gameData.player.club);
 	} else if (obj.id == "switchToClub"){
 		client.gui = CLUB;
 	} else if (obj.id == "switchToTeam"){
@@ -121,11 +167,11 @@ function mUp(obj) {
 	} else if (obj.id == "switchPosition"){
 		for (i = 0; i < gameData.player.club.team.players.length; i++) {
 			if (gameData.player.club.team.players[i].playerId == obj.value){
-				gameData.player.club.team.players[i].togglePosition();
+				toggleKickerPosition(gameData.player.club.team, gameData.player.club.team.players[i]);
 			}
 		}
 	} else if (obj.id == "hireTicketVendor"){
-		gameData.player.club.buyTicketVendor();
+		clubBuyTicketVendor(gameData.player.club);
 	} else if (obj.id == "switchToFormation"){
 		client.gui = FORMATION;
 	} else if (obj.id == "switchToTraining"){
@@ -135,28 +181,43 @@ function mUp(obj) {
 	} else if (obj.id == "switchTrainingFocus"){
 		for (i = 0; i < gameData.player.club.team.players.length; i++) {
 			if (gameData.player.club.team.players[i].playerId == obj.value){
-				gameData.player.club.team.players[i].toggleTrainingFocus();
+				toggleKickerTrainingFocus(gameData.player.club.team.players[i]);
 			}
 		}
 	} else if (obj.id == "cancelContract"){
 		for (i = 0; i < gameData.player.club.team.players.length; i++) {
 			if (gameData.player.club.team.players[i].playerId == obj.value) {
-				client.value = i;
+				client.value = obj.value;
+				console.log(obj.value);
+				console.log(gameData.player.club.team);
 			}
 		}
 		client.gui = CANCELCONTRACT;		
 	} else if (obj.id == "confirmCancelContract"){
-		for (i = 0; i < gameData.player.club.team.players.length; i++) {
-			console.log(gameData.player.club.team.players[i].playerId);
-		}
-		gameData.player.club.team.firePlayer(client.value);
-		for (i = 0; i < gameData.player.club.team.players.length; i++) {
-			console.log(gameData.player.club.team.players[i].playerId);
-		}
+		firePlayer(gameData.player.club.team, client.value);
 		client.gui = TEAMCONTRACTS;		
+	} else if (obj.id == "switchToFinance"){
+		client.gui = FINANCE;
 	} else if (obj.id == "switchToMarketing"){
 		client.gui = MARKETING;
+	} else if (obj.id == "upgradePerimeterAdvertising"){
+		upgradePerimeterAdvertising(gameData.player.club);
+	} else if (obj.id == "switchToPersonnel"){
+		client.gui = PERSONNEL;
+	} else if (obj.id == "upgradeCoach"){
+		upgradeCoach(gameData.player.club);
+	} else if (obj.id == "upgradeYouthAcademy"){
+		clubUpgradeYouthAcademy(gameData.player.club);
+		//gameData.player.club.upgradeYouthAcademy();
+	} else if (obj.id == "upgradeTerraceCapacity"){
+		upgradeTerraceSeating(gameData.player.club, obj.value);
+	} else if (obj.id == "upgradeTerraceComfort"){
+		upgradeTerraceComfort(gameData.player.club, obj.value);
+		//gameData.player.club.upgradeTerraceComfort(obj.value);
+	} else if (obj.id == "switchToStatistics"){
+		client.gui = STATISTICS;
 	}	
+	updateFrame();
 }
 
 
@@ -234,3 +295,33 @@ function sortByKey(array, key) {
         return ((x < y) ? -1 : ((x > y) ? 1 : 0));
     });
 }
+
+function loadGame() {
+	console.log("loading");
+	gameData.gameDate.getDay = gameData.gameDate = new Date(gameData.gameDate);
+	console.log(gameData.player.club);
+}
+
+
+function printStatusLine(printLeague) {
+	var statusLineString = listGroupStart + listGroupItem;
+	statusLineString += "<strong>" + gameData.player.club.name + "</strong> " + leagueNames[gameData.player.leagueLevel] + " " + gameData.player.leagueID + " " + "Kontostand: " + gameData.player.club.cash.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + " " + printGameDate();
+	statusLineString += listItemEnd + listGroupEnd;
+	/*
+	this.leagueLevel = 3;
+	this.leagueID = 2;
+	this.club
+	gameData.player.club.name
+	
+	if (printLeague.clubs[printLeague.table[pClub]].isHuman) {
+			tableString += listGroupItemSecondary + lPosition.toString() + ". " + (printLeague.clubs[printLeague.table[pClub]].name + " " + printLeague.clubs[printLeague.table[pClub]].leaguePoints + " " + printLeague.clubs[printLeague.table[pClub]].leagueGoalsScored + " " + printLeague.clubs[printLeague.table[pClub]].leagueGoalsConceded + "</b>"+ listItemEnd);
+		} else {
+		tableString += listGroupItem + lPosition.toString() + ". " + (printLeague.clubs[printLeague.table[pClub]].name + " " + printLeague.clubs[printLeague.table[pClub]].leaguePoints + " " + printLeague.clubs[printLeague.table[pClub]].leagueGoalsScored + " " + printLeague.clubs[printLeague.table[pClub]].leagueGoalsConceded + listItemEnd);
+		}
+		lPosition++;
+	}
+	tableString += listGroupEnd;
+	*/
+	return statusLineString;
+}
+

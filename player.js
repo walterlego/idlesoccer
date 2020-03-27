@@ -2,22 +2,30 @@
 
 var player = function() {
 	this.exp = 0;
-	this.club = new club(true);
-	this.sellTicket = function() {
-		if (this.club.stadium.ticketsSold < this.club.stadium.capacity) {
-			this.club.stadium.capacity;
-			this.club.stadium.ticketsSold++;
-			this.club.cash += this.club.stadium.ticketPrice;
-		}
-	}
-	this.update = function() {
-		this.club.ticketUpdate();
-		this.club.team.update();
-	}
+	this.leagueLevel = 3;
+	this.leagueID = 2;
+	this.club = new club(true, this.leagueLevel, this.leagueID);
+	this.leaguePlace = -1;
 	return this;
 	//console.log(this);
 };
 
+function updateHumanLeagueposition() {
+	let playerPlace=0;
+	let searchHumanClub = -1;
+	let humanRanking = -1;
+	while (searchHumanClub == -1) {
+		if (gameData.leagues[gameData.player.leagueLevel][gameData.player.leagueID].clubs[playerPlace].isHuman == true) {
+			searchHumanClub = playerPlace;
+		}
+		playerPlace++;
+	}
+	for (humanRanking=0; humanRanking < gameData.leagues[gameData.player.leagueLevel][gameData.player.leagueID].table.length; humanRanking++) {
+		if (gameData.leagues[gameData.player.leagueLevel][gameData.player.leagueID].table[humanRanking] == searchHumanClub) {
+			gameData.player.leaguePlace = humanRanking;
+		}
+	}
+}
 
 //////////////////////////////////////////////////////////////////////
 ////////////// getters ///////////////////////////////////////////////

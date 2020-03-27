@@ -2,6 +2,12 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
 <title>IDLE SOCCER</title>
 <script src="jquery.js"></script>
 <script src="constants.js"></script>
@@ -17,24 +23,102 @@
 <script src="stadium.js"></script>
 <script src="league.js"></script>
 <script src="clubNames.js"></script>
-<script src="gameday.js"></script>
+<script src="cityData.js"></script>
 
 <link rel="stylesheet" href="css.css" media="all">
 
 </head>
 <body>
-<h1>IDLE SOCCER</h1>
-<div id="headLine">HeadLine----------</div>
-<div id="mainMenu">MainMenu----------</div>
-<div id="game">Resources-------------</div>
+<!--
+	mainMenuString = sectionStart;
+	mainMenuString += colStart;
+	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"switchToClub\">Verein</button>";
+	mainMenuString += colEnd;
+	mainMenuString += colStart;
+	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"switchToTeam\">Team</button>";
+	mainMenuString += colEnd;
+	mainMenuString += colStart;
+	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"switchToStadium\">Stadion</button>";
+	mainMenuString += colEnd;
+	mainMenuString += sectionEnd;
 
-<div id="debug_output">debug_output: </div>
+-->
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="navbar-brand" id="navBarClubName">IDLE SOCCER</div>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+	  
+	  <!-- Club  -->
+	  
+	  <li class="nav-item dropdown">
+        <div class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Club
+        </div>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+		  <div class="dropdown-item" onmouseup="mUp(this)" id="switchToFinance">Finance</div>
+		  <div class="dropdown-item" onmouseup="mUp(this)" id="switchToMarketing">Marketing</div>
+          <div class="dropdown-item" onmouseup="mUp(this)" id="switchToPersonnel">Staff</div>
+        </div>
+      </li>
+	  
+	  <!-- Team  -->
+	  
+	  <li class="nav-item dropdown">
+        <div class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Team
+        </div>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+		  <div class="dropdown-item" onmouseup="mUp(this)" id="switchToFormation">Formation</div>
+          <div class="dropdown-item" onmouseup="mUp(this)" id="switchToTraining">Training</div>
+		  <div class="dropdown-item" onmouseup="mUp(this)" id="switchToTeamContracts">Contracts</div>
+        </div>
+      </li>
+	  	  
+	  <!-- Infrastruktur  -->
+	  
+	  <li class="nav-item">
+        <div class="nav-link" href="#" onmouseup="mUp(this)" id="switchToStadium">Stadion</div>
+      </li>
+	  <li class="nav-item">
+        <div class="nav-link" href="#" onmouseup="mUp(this)" id="switchToStatistics">Statistics</div>
+      </li>
+    </ul>
+	 <button class="btn btn-primary pull-right " onmouseup="mUp(this)" id="pauseGame">
+		Pause
+	  </button>	
+  </div>
+</nav>
 
 
 
+
+
+<div class="container-fluid">
+	<div id="headLine">HeadLine----------</div>
+
+	<div id="game">Resources-------------</div>
+
+	<div id="debug_output">debug_output: </div>
+	<div class="progress">
+	  <div class="progress-bar" role="progressbar" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+	</div>
+</div>
+
+<!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+  
 <script>
  
-    $( document ).ready(function() {
+    
+	$( document ).ready(function() {
 		setUp();
 	});
 	
