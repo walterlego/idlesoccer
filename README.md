@@ -25,7 +25,7 @@ there are four terraces
 each terrace has a capacity and a comfort level
 there are ticket sellers that sell tickets per game
 
-# players # 
+### players ###
 Players have an age. They retire when they get old
 Players have talent and skill
 The younger and the more talented the player is, the faster he improves his skill.
