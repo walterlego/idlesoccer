@@ -395,21 +395,45 @@ function ticketUpdate(ticketClub) {
 ///// Rendering
 //////////////////////////////////////////////////
 
+/* These are helper functions you'll want to move elsewhere */
+function createDiv(...classes) {
+	const el = document.createElement("div");
+
+	el.classList.add(...classes);
+
+	return el;
+}
+
+function asCurrency(amount) {
+	return amount.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+}
+
+/* The DOM elements that we'll be using for the finance card. These won't
+change. */
+const financeCard = createDiv('card', 'w-50');
+const financeCardHeader = createDiv('card-header');
+const financeCardBody = createDiv('card-body');
+financeCard.appendChild(financeCardHeader);
+financeCard.appendChild(financeCardBody);
+
+financeCardHeader.textContent = 'Finance';
+
+/* 
+* This updates the text on the card to match the current data. Ideally, you
+* would break this down even more so that you can just ask the finance menu data
+* to update, and it'll update its own elements.
+*/
 function renderFinanceMenu(cRenderFinanceMenu) {	
-	renderClubMenuString = cardStart50;
-		renderClubMenuString += cardHeaderStart;
-			renderClubMenuString += "Finance";
-		renderClubMenuString += divEnd;
-		renderClubMenuString += cardBodyStart;
-			renderClubMenuString += "Account balance: " + cRenderFinanceMenu.cash.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Revenue current month: " + cRenderFinanceMenu.revenueCurrentMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Revenue last month: " + cRenderFinanceMenu.revenueLastMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Cost current month: " + cRenderFinanceMenu.costCurrentMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Cost last month: " + cRenderFinanceMenu.costLastMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Balance last month: " + (cRenderFinanceMenu.revenueLastMonth - cRenderFinanceMenu.costLastMonth).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-		renderClubMenuString += divEnd;
-	renderClubMenuString += divEnd + divEnd;
-	return renderClubMenuString;
+	financeCardBody.innerHTML = `
+Account balance: ${asCurrency(cRenderFinanceMenu.cash)}<br/>
+Revenue current month: ${asCurrency(cRenderFinanceMenu.revenueCurrentMonth)}<br />
+Revenue last month: ${asCurrency(cRenderFinanceMenu.revenueLastMonth)}<br />
+Cost current month: ${asCurrency(cRenderFinanceMenu.costCurrentMonth)}<br />
+Cost last month: ${asCurrency(cRenderFinanceMenu.costLastMonth)}<br />
+Balance last month: ${asCurrency(cRenderFinanceMenu.revenueLastMonth - cRenderFinanceMenu.costLastMonth)}<br />
+`;
+
+	return financeCard;
 };
 
 function renderMarketingMenu(cRenderMarketingMenu) {	
