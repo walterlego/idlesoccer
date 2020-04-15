@@ -114,7 +114,10 @@ function updateFrame() {
 	}  else if (client.gui == TEAMCONTRACTS){
 		gui += renderTeamContracts(gameData.player.club.team);
 	} else if (client.gui == FINANCE){
-		gui += renderFinanceMenu(gameData.player.club);
+		/* What we really want to do here, is instead to store the game element, and
+		then call game.appendChild(financeMenu) on it. The the finance menu can
+		update its own data instead of doing it this way. */
+		gui += renderFinanceMenu(gameData.player.club).innerHTML;
 	} else if (client.gui == MARKETING){
 		gui += renderMarketingMenu(gameData.player.club);
 	} else if (client.gui == CANCELCONTRACT){
