@@ -18,7 +18,11 @@ var kicker = function(rueckenNummer, leagueLevel) {
 	this.playDefense = getKickerDefense(this);
 	this.playOffense = getKickerOffense(this);
 	this.playmaking = getKickerPlaymaking(this);
-
+	this.trainingEffect = 0;
+	this.coachfactor = 0;
+	this.agefactor = 0;
+	this.talentfactor = 0;
+	this.leaguefactor = 0;
 };
 
 
@@ -84,32 +88,52 @@ function toggleKickerTrainingFocus(getKicker) {
 };
 
 
-function kickerTraining(getKicker) {
+function kickerTraining(getKicker, trainingClub) {
 	//Skill 	= Skill * Trainerlevel								* Alter		^ Talent
-	let trainingEffect = Math.pow(Math.pow(gameData.player.club.coach,COACHEFFICIENCY)*Math.pow(((AGEBALANCING+REFERENCEAGE)/(getKicker.age+AGEBALANCING)),AGEEXPONENT),(TRAININGTALENTEFFECTIVITY*getKicker.talent));
-	//console.log(trainingEffect);
+	let pre = getKicker.skill;
+	getKicker.coachfactor = ((COACHBALANCING+trainingClub.coach)/COACHBALANCING);
+	getKicker.agefactor = ((AGEBALANCING+REFERENCEAGE)/(getKicker.age+AGEBALANCING));
+	getKicker.talentfactor = ((TALENTBALANCING+getKicker.talent)/TALENTBALANCING);
+	//getKicker.skill *= coachfactor * agefactor * talentfactor;
+	getKicker.trainingEffect = getKicker.coachfactor * getKicker.agefactor * getKicker.talentfactor;
+	/*
+	if(trainingClub.isHuman) {
+		console.log("------------------------------------------------------");
+		console.log("trainingEffect", getKicker.trainingEffect);
+		console.log("coachfactor", trainingClub.coach, (getKicker.coachfactor*10000)-10000);
+		console.log("agefactor", getKicker.age, (getKicker.agefactor*10000)-10000);
+		console.log("talentfactor", getKicker.talent, (getKicker.talentfactor*10000)-10000);
+	}
+	*/
 	if (getKicker.trainingFocus == DEFENCE) {
-		getKicker.defense *= trainingEffect;
+		getKicker.defense *= getKicker.trainingEffect;
 		if (getKicker.defense > 1) {
 			getKicker.defense = 1;
 		}
-		getKicker.skill *= (((trainingEffect-1)*0,75)+1);
+		//console.log("trainingEffect", getKicker.trainingEffect);
+		//console.log("adjusted trainingEffect", (((getKicker.trainingEffect-1)*0,75)+1));
+		getKicker.skill += ((getKicker.trainingEffect-1)*0.75);
 	} else if (getKicker.trainingFocus == STRIKER) {
-		getKicker.defense /= trainingEffect;
+		getKicker.defense /= getKicker.trainingEffect;
 		if (getKicker.defense < 0) {
 			getKicker.defense = 0;
 		}
-		getKicker.skill *= (((trainingEffect-1)*0,75)+1);
-	} else if (getKicker.trainingFocus == MIDFIELD) {
-		//Skill 	= Skill * Trainerlevel								* Alter		^ Talent
-		getKicker.skill *= trainingEffect;
+		//console.log("trainingEffect", getKicker.trainingEffect);
+		//console.log("adjusted trainingEffect", (((getKicker.trainingEffect-1)*0.75)+1));
+		getKicker.skill += ((getKicker.trainingEffect-1)*0.75);
+	} else {
+		//Skill 	= Skill * Trainerlevel	* Alter	* Talent
+		getKicker.skill += getKicker.trainingEffect-1;
 	}
 };
 
-function kickerMatch (getKicker) {
+function kickerMatch (getKicker, leagueLevel) {
 	if (getKicker.position < BENCH) {
-		var pre = getKicker.skill;
-		getKicker.skill *= Math.pow(Math.pow(gameData.player.club.coach,COACHEFFICIENCY)*Math.pow(((AGEBALANCING+REFERENCEAGE)/(getKicker.age+AGEBALANCING)),AGEEXPONENT),(TRAININGTALENTEFFECTIVITY*getKicker.talent));
+		getKicker.leaguefactor = ((LEAGUEBALANCING+(18-leagueLevel))/LEAGUEBALANCING);
+		getKicker.agefactor = ((AGEBALANCING+REFERENCEAGE)/(getKicker.age+AGEBALANCING));
+		getKicker.talentfactor = ((TALENTBALANCING+getKicker.talent)/TALENTBALANCING);
+		//getKicker.skill *= coachfactor * agefactor * talentfactor;
+		getKicker.trainingEffect = getKicker.leaguefactor * getKicker.agefactor * getKicker.talentfactor;
 	}
 };
 
@@ -130,7 +154,10 @@ function kickerNextSeason(getKicker) {
 
 
 function calculateKickerSalary(getKicker) {
-	getKicker.salary = Math.pow(getKicker.skill+1,SALARYCONSTANT);
+	getKicker.salary = Math.pow((getKicker.skill+1),SALARYCONSTANT);
+	if (isNaN(getKicker.salary)) {
+		console.log(getKicker);
+	}
 	return getKicker.salary;
 };
 
@@ -180,7 +207,7 @@ function renderPlayerFormation(getKicker) {
 function renderPlayerTraining(rpTraining) {
 	mainMenuString = cardStart50;
 		mainMenuString += cardHeaderStart;
-			mainMenuString += "<div id=\"selectSingleKicker\" value="+ rpTraining.playerId + ">" + rpTraining.firstname + " " + rpTraining.lastname + "<br />" + "</div>";
+			mainMenuString += "<div id=\"selectSingleKicker\" value="+ rpTraining.playerId + "><strong>" + rpTraining.firstname + " " + rpTraining.lastname + "</strong><br />" + "</div>";
 		mainMenuString += divEnd;
 		mainMenuString += cardBodyStart;
 			mainMenuString += "Position: " +  positionNames[rpTraining.position] + "<br />" + "Talent: " +  Math.round(rpTraining.talent*10000)/100 + "<br />Alter: " + rpTraining.age + "<br />";
@@ -199,11 +226,15 @@ function renderPlayerContract(rPC) {
 		mainMenuString += cardHeaderStart;
 			mainMenuString += "<div id=\"selectSingleKicker\" value="+ rPC.playerId + "><strong>" + rPC.firstname + " " + rPC.lastname + "</strong><br />" + "</div>";
 		mainMenuString += divEnd;
-		mainMenuString += cardBodyStart;			
+		mainMenuString += cardBodyStart;		
 			mainMenuString += "Position: " + positionNames[rPC.position] + "<br />Talent: " +  Math.round(rPC.talent*10000)/100 + "<br />Alter: " + rPC.age + "<br />";
 			mainMenuString +=  	Math.round(rPC.defense*rPC.skill*10000)/100 + "% defensiv" + "<br />" + 
 									Math.round((1-rPC.defense)*rPC.skill*10000)/100 + "% offensiv" + "<br />";
-			mainMenuString += "Gehalt: " + rPC.salary + "<br />Marktwert: " + rPC.value + "<br />";
+			mainMenuString += "Gehalt: " + rPC.salary.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />Marktwert: " + rPC.value.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			/*
+			mainMenuString += "<div class=\"custom-control custom-switch\"><input type=\"checkbox\" class=\"custom-control-input\" id=\"autoExtendPlayerContract\" value="+ rPC.playerId + " checked>" +
+								"<label class=\"custom-control-label\" for=\"autoExtendPlayerContract\">Auto-extend contract</label></div>";
+								*/
 			mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"extendContract\" value="+ rPC.playerId + " >" + "Extend contract" + "</button>" + "<br />";
 			mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"cancelContract\" value="+ rPC.playerId + " >" + "Cancel contract" + "</button>";
 		mainMenuString += divEnd;

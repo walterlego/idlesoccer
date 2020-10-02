@@ -6,6 +6,8 @@ var player = function() {
 	this.leagueID = 2;
 	this.club = new club(true, this.leagueLevel, this.leagueID);
 	this.leaguePlace = -1;
+	gameData.displayLeagueLevel = this.leagueLevel;
+	gameData.displayLeagueID = this.leagueID;
 	return this;
 	//console.log(this);
 };

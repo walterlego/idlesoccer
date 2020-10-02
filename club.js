@@ -4,7 +4,7 @@ var club = function(isHuman, leagueLevel, leagueID) {
 	this.leagueLevel = leagueLevel;
 	this.leagueID = leagueID;
 	this.reputation = (18-this.leagueLevel) * (18-this.leagueLevel);
-	console.log("Reputation ", leagueNames[this.leagueLevel], this.reputation);
+	//console.log("Reputation ", leagueNames[this.leagueLevel], this.reputation);
 	this.cash = Math.floor(Math.pow(2,(18-this.leagueLevel))*50);
 	//name
 	this.name = clubPrefix[Math.floor(Math.random()*clubPrefix.length)] + " ";
@@ -68,9 +68,9 @@ function loadClub(loadClub) {
 }
 
 //gameDay
-function clubGameDay(clubGameDay) {
+function clubGameDay(clubGameDay, gameDayLeague) {
 	//stadiumGameDay(clubGameDay);
-	teamGameDay(clubGameDay.team);
+	teamGameDay(clubGameDay.team, gameDayLeague);
 }
 
 function clubGameDayHome(homeClub) {
@@ -81,7 +81,7 @@ function clubGameDayHome(homeClub) {
 //trainingday
 
 function trainingdayClub(trainingClub) {
-	teamTraining(trainingClub.team);
+	teamTraining(trainingClub.team, trainingClub);
 }
 
 
@@ -121,7 +121,7 @@ function clubNextSeason(nMClub, nMLeague) {
 	for (searchClub = 0; searchClub < nMLeague.clubs.length; searchClub++) {
 		if (nMLeague.clubs[searchClub].name == nMClub.name) {
 			nMClub.reputation = 0.75 * nMClub.reputation + 0.25 * ((18-nMClub.leagueLevel) * (18-searchClub));
-			console.log("Liga: ", gameData.currentLeague.clubs.length, "Tabellenplatz: ", searchClub, "Club: ", gameData.currentLeague.clubs[searchClub].name, "Reputation: ", nMClub.reputation);
+			//console.log("Liga: ", gameData.currentLeague.clubs.length, "Tabellenplatz: ", searchClub, "Club: ", gameData.currentLeague.clubs[searchClub].name, "Reputation: ", nMClub.reputation);
 		}
 	}
 	nMClub.leaguePoints = 0;
@@ -186,7 +186,7 @@ function clubUpgradeYouthAcademy(upgradeYAC) {
 }
 
 function addJuniorKicker(aJKClub) {
-	var youngster = new kicker(-1);
+	var youngster = new kicker(-1, aJKClub.leagueLevel);
 	youngster.skill = (Math.random() * Math.pow(aJKClub.youthAcademy,0.2) + Math.random() * Math.pow(aJKClub.youthAcademy,0.2) + Math.random() * Math.pow(aJKClub.reputation,0.2)) / 3;
 	youngster.talent = (Math.random() * Math.pow(aJKClub.youthAcademy,0.2) + Math.random() * Math.pow(aJKClub.youthAcademy,0.2) + Math.random() * Math.pow(aJKClub.reputation,0.2)) / 3;
 	youngster.age= Math.floor(Math.random()*4)+16;
@@ -279,26 +279,26 @@ function getPerimeterAdvertisingMonthlyBalance(nMClub) {
 
 function getPerimeterAdvertisingMonthlyRevenue(nMClub) {
 	if(nMClub.perimeterAdvertising>0) {
-		return Math.pow(PERIMETERADVERTISINGREVENUEBASE,(PERIMETERADVERTISINGEFFICIENCY*nMClub.perimeterAdvertising*nMClub.reputation));
+		return PERIMETERADVERTISINGREVENUEMULTIPLIER * Math.pow(PERIMETERADVERTISINGREVENUEBASE,(PERIMETERADVERTISINGEFFICIENCY*nMClub.perimeterAdvertising*nMClub.reputation));
 	} else {
 		return 0;
 	}
 }
 
 function getPerimeterAdvertisingMonthlyRevenueAfterUpgrade(nMClub) {
-	return Math.pow(PERIMETERADVERTISINGREVENUEBASE,(PERIMETERADVERTISINGEFFICIENCY*(nMClub.perimeterAdvertising+1)*nMClub.reputation));
+	return PERIMETERADVERTISINGREVENUEMULTIPLIER * Math.pow(PERIMETERADVERTISINGREVENUEBASE,(PERIMETERADVERTISINGEFFICIENCY*(nMClub.perimeterAdvertising+1)*nMClub.reputation));
 }
 
 function getPerimeterAdvertisingMonthlyCost(nMClub) {
 	if(nMClub.perimeterAdvertising>0) {
-		return Math.pow(PERIMETERADVERTISINGMONTHLYCOST, (PERIMETERADVERTISINGMONTHLYINCREMENT*nMClub.perimeterAdvertising));
+		return PERIMETERADVERTISINGRECOSTMULTIPLIER * Math.pow(PERIMETERADVERTISINGMONTHLYCOST, (PERIMETERADVERTISINGMONTHLYINCREMENT*nMClub.perimeterAdvertising));
 	} else {
 		return 0;
 	}
 }
 
 function getPerimeterAdvertisingMonthlyCostAferUpgrade(nMClub) {
-	return Math.pow(PERIMETERADVERTISINGMONTHLYCOST, (PERIMETERADVERTISINGMONTHLYINCREMENT*(nMClub.perimeterAdvertising+1)));
+	return PERIMETERADVERTISINGRECOSTMULTIPLIER * Math.pow(PERIMETERADVERTISINGMONTHLYCOST, (PERIMETERADVERTISINGMONTHLYINCREMENT*(nMClub.perimeterAdvertising+1)));
 }
 
 function upgradePerimeterAdvertising(advertisingClub) {
@@ -306,9 +306,9 @@ function upgradePerimeterAdvertising(advertisingClub) {
 	if (advertisingClub.cash >= PAUpgradeCost) {
 		advertisingClub.cash -= PAUpgradeCost;
 		advertisingClub.perimeterAdvertising++;
-		advertisingClub.perimeterAdvertisingRevenue = Math.pow(PERIMETERADVERTISINGREVENUEBASE,(PERIMETERADVERTISINGEFFICIENCY*advertisingClub.perimeterAdvertising*advertisingClub.reputation));
+		advertisingClub.perimeterAdvertisingRevenue = getPerimeterAdvertisingMonthlyRevenue(advertisingClub);
 		console.log("Einnahmen", advertisingClub.perimeterAdvertisingRevenue);
-		advertisingClub.perimeterAdvertisingMaintenance = Math.pow(PERIMETERADVERTISINGBASECOST,(PERIMETERADVERTISINGMONTHLYCOST*advertisingClub.perimeterAdvertising));
+		advertisingClub.perimeterAdvertisingMaintenance = getPerimeterAdvertisingMonthlyCost(advertisingClub);
 		console.log("Monatliche Kosten", advertisingClub.perimeterAdvertisingMaintenance);
 		
 		
@@ -395,45 +395,21 @@ function ticketUpdate(ticketClub) {
 ///// Rendering
 //////////////////////////////////////////////////
 
-/* These are helper functions you'll want to move elsewhere */
-function createDiv(...classes) {
-	const el = document.createElement("div");
-
-	el.classList.add(...classes);
-
-	return el;
-}
-
-function asCurrency(amount) {
-	return amount.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
-}
-
-/* The DOM elements that we'll be using for the finance card. These won't
-change. */
-const financeCard = createDiv('card', 'w-50');
-const financeCardHeader = createDiv('card-header');
-const financeCardBody = createDiv('card-body');
-financeCard.appendChild(financeCardHeader);
-financeCard.appendChild(financeCardBody);
-
-financeCardHeader.textContent = 'Finance';
-
-/* 
-* This updates the text on the card to match the current data. Ideally, you
-* would break this down even more so that you can just ask the finance menu data
-* to update, and it'll update its own elements.
-*/
 function renderFinanceMenu(cRenderFinanceMenu) {	
-	financeCardBody.innerHTML = `
-Account balance: ${asCurrency(cRenderFinanceMenu.cash)}<br/>
-Revenue current month: ${asCurrency(cRenderFinanceMenu.revenueCurrentMonth)}<br />
-Revenue last month: ${asCurrency(cRenderFinanceMenu.revenueLastMonth)}<br />
-Cost current month: ${asCurrency(cRenderFinanceMenu.costCurrentMonth)}<br />
-Cost last month: ${asCurrency(cRenderFinanceMenu.costLastMonth)}<br />
-Balance last month: ${asCurrency(cRenderFinanceMenu.revenueLastMonth - cRenderFinanceMenu.costLastMonth)}<br />
-`;
-
-	return financeCard;
+	renderClubMenuString = cardStart50;
+		renderClubMenuString += cardHeaderStart;
+			renderClubMenuString += "Finance";
+		renderClubMenuString += divEnd;
+		renderClubMenuString += cardBodyStart;
+			renderClubMenuString += "Account balance: " + cRenderFinanceMenu.cash.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			renderClubMenuString += "Revenue current month: " + cRenderFinanceMenu.revenueCurrentMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			renderClubMenuString += "Revenue last month: " + cRenderFinanceMenu.revenueLastMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			renderClubMenuString += "Cost current month: " + cRenderFinanceMenu.costCurrentMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			renderClubMenuString += "Cost last month: " + cRenderFinanceMenu.costLastMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			renderClubMenuString += "Balance last month: " + (cRenderFinanceMenu.revenueLastMonth - cRenderFinanceMenu.costLastMonth).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+		renderClubMenuString += divEnd;
+	renderClubMenuString += divEnd + divEnd;
+	return renderClubMenuString;
 };
 
 function renderMarketingMenu(cRenderMarketingMenu) {	
@@ -477,8 +453,8 @@ function renderPerimeterAdvertisingCard(cPerimeterAdvertising) {
 };
 
 function renderStaffMenu(renderClub) {
-	renderClubMenuString = "<br />" + renderCoachCard(renderClub);
-	renderClubMenuString += "<br />" + renderYouthAcademyCard(renderClub);
+	renderClubMenuString = br + renderCoachCard(renderClub);
+	renderClubMenuString += br + renderYouthAcademyCard(renderClub);
 	return renderClubMenuString;
 }
 
@@ -488,7 +464,7 @@ function renderCoachCard(renderClub) {
 			renderCoachCardString += "<h3>Coach</h3>";
 		renderCoachCardString += divEnd;
 		renderCoachCardString += cardBodyStart;
-			renderCoachCardString += "Upgrade Cost: " + Math.floor(perimeterAdvertisingPrice[renderClub.coach]) + " € <br />";
+			renderCoachCardString += "Upgrade Cost: " + coachPrice[renderClub.coach].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
 			if (renderClub.cash >= coachPrice[renderClub.coach]) {
 				renderCoachCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"upgradeCoach\">"+coachString[renderClub.coach+1]+"</button>";
 			} else {
@@ -505,7 +481,7 @@ function renderYouthAcademyCard(renderClub) {
 			renderYouthAcademyCardString += "Youth Academy";
 		renderYouthAcademyCardString += divEnd;
 		renderYouthAcademyCardString += cardBodyStart;
-			renderYouthAcademyCardString += "Upgrade Cost: " + Math.floor(youthAcademyPrice[renderClub.youthAcademy]) + " € <br />";
+			renderYouthAcademyCardString += "Upgrade Cost: " + Math.floor(youthAcademyPrice[renderClub.youthAcademy]).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
 			if (renderClub.cash >= coachPrice[renderClub.coach]) {
 				renderYouthAcademyCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"upgradeYouthAcademy\">"+youthAcademyString[renderClub.youthAcademy+1]+"</button>";
 			} else {
@@ -588,7 +564,7 @@ function setStadiumMenu (cStadium) {
 function renderStatisticsMenu(cRenderFinanceMenu) {	
 	renderClubMenuString = cardStart50;
 		renderClubMenuString += cardHeaderStart;
-			renderClubMenuString += "Finance";
+			renderClubMenuString += strong + "Finance" + strongEnd;
 		renderClubMenuString += divEnd;
 		renderClubMenuString += cardBodyStart;
 			renderClubMenuString += "Account balance: " + cRenderFinanceMenu.cash.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
@@ -599,16 +575,93 @@ function renderStatisticsMenu(cRenderFinanceMenu) {
 			renderClubMenuString += "Balance last month: " + (cRenderFinanceMenu.revenueLastMonth - cRenderFinanceMenu.costLastMonth).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
 		renderClubMenuString += divEnd;
 	renderClubMenuString += divEnd + divEnd;
-	renderClubMenuString += printleagueTable(gameData.leagues[gameData.player.leagueLevel][gameData.player.leagueID]);
 	return renderClubMenuString;
 };
+
+function refreshLeagueViewMenu() {
+	document.getElementById("leagueTableCard").innerHTML = refreshLeagueTableCard();
+}
+
+
+function renderLeagueViewMenu() {
+	renderClubMenuString = setDivID("chooseLeagueCard")
+	renderClubMenuString += renderChooseLeagueCard();
+	renderClubMenuString += divEnd;
+	renderClubMenuString += setDivID("leagueTableCard");
+	renderClubMenuString += renderLeagueTableCard();
+	renderClubMenuString += divEnd;
+	return renderClubMenuString;
+};
+
+function renderChooseLeagueCard() {
+	let chooseLeagueCardString = cardStart50SetID("chooseLeagueCard");
+		chooseLeagueCardString += cardHeaderStart;
+			chooseLeagueCardString += strong + "Choose League" + strongEnd;
+		chooseLeagueCardString += divEnd;
+		chooseLeagueCardString += cardBodyStart;
+			chooseLeagueCardString += dropdownStart
+				chooseLeagueCardString += setDropdownButton("chooseLeagueLevel", "Choose League");
+				chooseLeagueCardString += setDrowpdownMenu("chooseLeagueLevel");
+				for (lL=0; lL < gameData.leagues.length; lL++) {
+					console.log(gameData.leagues[lL])
+					chooseLeagueCardString += setDropdownItemID(lL, leagueNames[lL], "chooseLeagueLevelDD");
+				}
+			chooseLeagueCardString += divEnd;
+			chooseLeagueCardString += br;
+			chooseLeagueCardString += dropdownStart
+				if (gameData.leagues[gameData.currentLeagueLevel].length > 0) {
+					chooseLeagueCardString += setDropdownButton("chooseLeagueID", "Choose Division ");
+					chooseLeagueCardString += setDrowpdownMenu("chooseLeagueID");
+					for (lL=0; lL < gameData.leagues[gameData.currentLeagueLevel].length; lL++) {
+						chooseLeagueCardString += setDropdownItemID(lL, lL.toString(), "chooseLeagueID");
+					}
+				} else {
+					chooseLeagueCardString += setDropdownButtonInactive("chooseLeagueID", "Choose Division ");
+					chooseLeagueCardString += setDrowpdownMenu("chooseLeagueID");
+				}
+				chooseLeagueCardString += divEnd;
+		chooseLeagueCardString += divEnd;
+	chooseLeagueCardString += divEnd + divEnd;
+	return chooseLeagueCardString;
+};
+
+
+function renderLeagueTableCard() {
+	let leagueTableCardString = cardStart50SetID("leagueTableCard");
+		leagueTableCardString += cardHeaderStart;
+			leagueTableCardString += strong + leagueNames[gameData.displayLeagueLevel] + " " + [gameData.displayLeagueID] + strongEnd;
+			leagueTableCardString += printleagueTable(gameData.leagues[gameData.displayLeagueLevel][gameData.displayLeagueID]);
+		leagueTableCardString += divEnd;
+		leagueTableCardString += cardBodyStart;
+			
+		leagueTableCardString += divEnd;
+	leagueTableCardString += divEnd;
+	return leagueTableCardString;
+};
+
+function refreshLeagueTableCard() {
+	let leagueTableCardString = cardStart50SetID("leagueTableCard");
+		leagueTableCardString += cardHeaderStart;
+			leagueTableCardString += strong + leagueNames[gameData.displayLeagueLevel] + " " + [gameData.displayLeagueID] + strongEnd;
+			leagueTableCardString += printleagueTable(gameData.leagues[gameData.displayLeagueLevel][gameData.displayLeagueID]);
+		leagueTableCardString += divEnd;
+		leagueTableCardString += cardBodyStart;
+			
+		leagueTableCardString += divEnd;
+	leagueTableCardString += divEnd;
+	return leagueTableCardString;
+};
+
+
+//displayLeagueLevel
+//displayLeagueID
 
 
 function setClubMenu() {
 	
 	menuString = sectionStart;
 	menuString += colStart;
-	menuString += "<strong>" + gameData.player.club.name + "</strong>";
+	menuString += strong + gameData.player.club.name + strongEnd;
 	menuString += colEnd;
 	menuString += colStart;
 	menuString += "Kontostand: " + Math.floor(gameData.player.club.cash) + " €";

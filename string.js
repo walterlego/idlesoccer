@@ -8,31 +8,72 @@ var teamMenuString = "";
 var clubMenuString = "";
 
 //GUI strings
+function setDivID(setID) {
+	return "<div id=\"" + setID + "\">";
+}
 var sectionStart = "<div class=\"row\">";
 var rowStart = "<div class=\"row\">";
 var divEnd = "</div>";
+var br = "<br />";
 var sectionEnd = "</div>";
 var colEnd = "</div>";
 var nextCol = colEnd + colStart;
 var nextSection = colEnd + sectionEnd + sectionStart + colStart;
 var sectionStartColStart = sectionStart + colStart;
 var endSection = colEnd + sectionEnd;
+var strong = "<strong>";
+var strongEnd = "</strong>";
+var buttonEnd = "</button>";
 
 //Bootstrap GUI strings
 var containerStart = "<div class=\"container\">";
 var rowStart = "<div class=\"row\">";
 var colStart = "<div class=\"col\">";
+
+//Card
+
 var cardStart = "<div class=\"card\">";
 var cardStart50 = "<div class=\"card w-50\">";
+function cardStart50SetID(setID) {
+	return "<div class=\"card w-50\" id=\"" + setID + "\">";
+}
 var cardStart75 = "<div class=\"card w-75\">";
 var cardHeaderStart = "<div class=\"card-header\">";
 var cardBodyStart = "<div class=\"card-body\">";
+
+//List
+
 var listGroupStart = "<ul class=\"list-group\">";
 var listGroupItem = "<li class=\"list-group-item\">";
 var listGroupItemPrimary = "<li class=\"list-group-item ist-group-item-primary\">";
 var listGroupItemSecondary = "<li class=\"list-group-item list-group-item-secondary\">";
 var listItemEnd = "</li>";
 var listGroupEnd = "</ul>";
+
+//Dropdown
+
+var dropdownStart = "<div class=\"dropdown\">";
+
+function setDropdownButton(dropDownID, buttonLabel) {
+	return "<button class=\"btn btn-primary dropdown-toggle\" type=\"button\" id=" 
+			+ dropDownID + " data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\">" 
+			+ buttonLabel + buttonEnd;
+}
+
+function setDropdownButtonInactive(dropDownID, buttonLabel) {
+	return "<button class=\"btn btn-primary dropdown-toggle\" type=\"button\" id=" 
+			+ dropDownID + " data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"false\" disabled>" 
+			+ buttonLabel + buttonEnd;
+}
+
+function setDrowpdownMenu(idString) {
+	return "<div class=\"dropdown-menu\" aria-labelledby=" + idString +">";
+ }
+function setDropdownItemID(dropdownItemValue, dropdownItemLabel, dropDownID) {
+	return "<div class=\"dropdown-item\" id=" + dropDownID + " value=" + dropdownItemValue + " onmouseup=\"mUp(this)\" >" + dropdownItemLabel + "</div>";
+}
+
+
 
 //Bootstrap Table
 

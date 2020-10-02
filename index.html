@@ -5,7 +5,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <!-- Bootstrap CSS -->
+    <!-- Popper.js -->
+	<script src="https://unpkg.com/@popperjs/core@2"></script>
+	<!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 
 <title>IDLE SOCCER</title>
@@ -29,20 +31,6 @@
 
 </head>
 <body>
-<!--
-	mainMenuString = sectionStart;
-	mainMenuString += colStart;
-	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"switchToClub\">Verein</button>";
-	mainMenuString += colEnd;
-	mainMenuString += colStart;
-	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"switchToTeam\">Team</button>";
-	mainMenuString += colEnd;
-	mainMenuString += colStart;
-	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"switchToStadium\">Stadion</button>";
-	mainMenuString += colEnd;
-	mainMenuString += sectionEnd;
-
--->
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <div class="navbar-brand" id="navBarClubName">IDLE SOCCER</div>
@@ -84,8 +72,17 @@
 	  <li class="nav-item">
         <div class="nav-link" href="#" onmouseup="mUp(this)" id="switchToStadium">Stadion</div>
       </li>
-	  <li class="nav-item">
-        <div class="nav-link" href="#" onmouseup="mUp(this)" id="switchToStatistics">Statistics</div>
+	  
+	  <!-- Statistics -->
+	  
+	   <li class="nav-item dropdown">
+        <div class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Data
+        </div>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+		  <div class="dropdown-item" onmouseup="mUp(this)" id="switchToStatistics">Statistics</div>
+          <div class="dropdown-item" onmouseup="mUp(this)" id="switchToLeagueview">Leagues</div>
+        </div>
       </li>
     </ul>
 	 <button class="btn btn-primary pull-right " onmouseup="mUp(this)" id="pauseGame">

@@ -194,18 +194,18 @@ function getTeamPlaymaking(getTPM) {
 };
 
 //Training
-function teamTraining(trainingTeam) {
+function teamTraining(trainingTeam, trainingClub) {
 	for (iterPlayers = 0; iterPlayers < trainingTeam.players.length; iterPlayers++) {
-		kickerTraining(trainingTeam.players[iterPlayers]);
+		kickerTraining(trainingTeam.players[iterPlayers], trainingClub);
 	}
 	trainingTeam.teamDefense = getTeamDefense(trainingTeam);
 	trainingTeam.teamOffense = getTeamOffense(trainingTeam);
 	trainingTeam.teamPlaymaking = getTeamPlaymaking(trainingTeam);
 };
 
-function fillUpTeam(addTeam) {
+function fillUpTeam(addTeam, leagueLevel) {
 	for (addPlayers = 0; addPlayers<(11-addTeam.players.length); addPlayers++) {
-		var youngster = new kicker(-1);
+		var youngster = new kicker(-1, leagueLevel);
 		youngster.skill = (Math.random() * Math.pow(1,0.1) + Math.random() * Math.pow(1,0.1)) / 2;
 		youngster.talent = (Math.random() * Math.pow(1,0.1) + Math.random() * Math.pow(1,0.1)) / 2;
 		youngster.age= Math.floor(Math.random()*6)+22;
@@ -227,9 +227,9 @@ function firePlayer(fireteam, firePlayer) {
 };
 
 
-function teamGameDay(dgTeam) {
+function teamGameDay(dgTeam, gameDayLeague) {
 	for (iterPlayers = 0; iterPlayers < dgTeam.players.length; iterPlayers++) {
-		kickerMatch(dgTeam.players[iterPlayers]);
+		kickerMatch(dgTeam.players[iterPlayers], gameDayLeague.leagueLevel);
 	}
 	dgTeam.teamDefense = getTeamDefense(dgTeam);
 	dgTeam.teamOffense = getTeamOffense(dgTeam);

@@ -117,9 +117,9 @@ function initleagueSchedule(initLeagueS) {
 
 function match (matchLeague, clubA, clubB) {
 	
-	clubGameDay(matchLeague.clubs[clubA]);
+	clubGameDay(matchLeague.clubs[clubA], matchLeague);
 	clubGameDayHome(matchLeague.clubs[clubA]);
-	clubGameDay(matchLeague.clubs[clubB]);
+	clubGameDay(matchLeague.clubs[clubB], matchLeague);
 	var possessionA = getTeamPlaymaking(matchLeague.clubs[clubA].team);
 	var possessionB = getTeamPlaymaking(matchLeague.clubs[clubB].team);
 	var allPosession = possessionA + possessionB;
@@ -169,6 +169,17 @@ function trainingDay() {
 		trainingdayClub(gameData.currentLeague.clubs[tdC]);
 	}
 };
+
+
+function setLeagueLevelDisplay(leagueLeveltoSet) {
+	gameData.currentLeagueLevel = leagueLeveltoSet;
+};
+
+function setLeagueIDDisplay(leagueIDtoSet) {
+	gameData.currentLeagueID = leagueIDtoSet;
+};
+
+
 
 
 function leagueNextSeason() {
