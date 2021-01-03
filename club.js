@@ -1,8 +1,8 @@
-var club = function(isHuman, leagueLevel, leagueID) {
-	//console.log("Erstelle Club", isHuman, leagueLevel, leagueID);
+var club = function(isHuman, leagueLevel, leagueDivision) {
+	//console.log("Erstelle Club", isHuman, leagueLevel, leagueDivision);
 	this.isHuman = isHuman;
 	this.leagueLevel = leagueLevel;
-	this.leagueID = leagueID;
+	this.leagueDivision = leagueDivision;
 	this.reputation = (18-this.leagueLevel) * (18-this.leagueLevel);
 	//console.log("Reputation ", leagueNames[this.leagueLevel], this.reputation);
 	this.cash = Math.floor(Math.pow(2,(18-this.leagueLevel))*50);
@@ -129,10 +129,10 @@ function clubNextSeason(nMClub, nMLeague) {
 	nMClub.leagueGoalsScored = 0;
 	nMClub.leagueGoalsScored = 0;
 	nMClub.leagueLevel = nMLeague.leagueLevel;
-	nMClub.leagueID = nMLeague.leagueID;
+	nMClub.leagueDivision = nMLeague.leagueDivision;
 	if(nMClub.isHuman) {
 		gameData.player.leagueLevel = nMLeague.leagueLevel;
-		gameData.player.leagueID = nMLeague.leagueID;
+		gameData.player.leagueDivision = nMLeague.leagueDivision;
 	}
 	var addNumOfKickers = Math.round(Math.random()*(1+nMClub.youthAcademy));
 	//console.log("Nachwuchsspieler: ", addNumOfKickers);
@@ -144,7 +144,7 @@ function clubNextSeason(nMClub, nMLeague) {
 
 function clubPromotion(promotedClub) {
 	promotedClub.leagueLevel--;
-	promotedClub.leagueID = Math.floor(promotedClub.leagueID/2);
+	promotedClub.leagueDivision = Math.floor(promotedClub.leagueDivision/2);
 }
 
 
@@ -578,83 +578,7 @@ function renderStatisticsMenu(cRenderFinanceMenu) {
 	return renderClubMenuString;
 };
 
-function refreshLeagueViewMenu() {
-	document.getElementById("leagueTableCard").innerHTML = refreshLeagueTableCard();
-}
 
-
-function renderLeagueViewMenu() {
-	renderClubMenuString = setDivID("chooseLeagueCard")
-	renderClubMenuString += renderChooseLeagueCard();
-	renderClubMenuString += divEnd;
-	renderClubMenuString += setDivID("leagueTableCard");
-	renderClubMenuString += renderLeagueTableCard();
-	renderClubMenuString += divEnd;
-	return renderClubMenuString;
-};
-
-function renderChooseLeagueCard() {
-	let chooseLeagueCardString = cardStart50SetID("chooseLeagueCard");
-		chooseLeagueCardString += cardHeaderStart;
-			chooseLeagueCardString += strong + "Choose League" + strongEnd;
-		chooseLeagueCardString += divEnd;
-		chooseLeagueCardString += cardBodyStart;
-			chooseLeagueCardString += dropdownStart
-				chooseLeagueCardString += setDropdownButton("chooseLeagueLevel", "Choose League");
-				chooseLeagueCardString += setDrowpdownMenu("chooseLeagueLevel");
-				for (lL=0; lL < gameData.leagues.length; lL++) {
-					console.log(gameData.leagues[lL])
-					chooseLeagueCardString += setDropdownItemID(lL, leagueNames[lL], "chooseLeagueLevelDD");
-				}
-			chooseLeagueCardString += divEnd;
-			chooseLeagueCardString += br;
-			chooseLeagueCardString += dropdownStart
-				if (gameData.leagues[gameData.currentLeagueLevel].length > 0) {
-					chooseLeagueCardString += setDropdownButton("chooseLeagueID", "Choose Division ");
-					chooseLeagueCardString += setDrowpdownMenu("chooseLeagueID");
-					for (lL=0; lL < gameData.leagues[gameData.currentLeagueLevel].length; lL++) {
-						chooseLeagueCardString += setDropdownItemID(lL, lL.toString(), "chooseLeagueID");
-					}
-				} else {
-					chooseLeagueCardString += setDropdownButtonInactive("chooseLeagueID", "Choose Division ");
-					chooseLeagueCardString += setDrowpdownMenu("chooseLeagueID");
-				}
-				chooseLeagueCardString += divEnd;
-		chooseLeagueCardString += divEnd;
-	chooseLeagueCardString += divEnd + divEnd;
-	return chooseLeagueCardString;
-};
-
-
-function renderLeagueTableCard() {
-	let leagueTableCardString = cardStart50SetID("leagueTableCard");
-		leagueTableCardString += cardHeaderStart;
-			leagueTableCardString += strong + leagueNames[gameData.displayLeagueLevel] + " " + [gameData.displayLeagueID] + strongEnd;
-			leagueTableCardString += printleagueTable(gameData.leagues[gameData.displayLeagueLevel][gameData.displayLeagueID]);
-		leagueTableCardString += divEnd;
-		leagueTableCardString += cardBodyStart;
-			
-		leagueTableCardString += divEnd;
-	leagueTableCardString += divEnd;
-	return leagueTableCardString;
-};
-
-function refreshLeagueTableCard() {
-	let leagueTableCardString = cardStart50SetID("leagueTableCard");
-		leagueTableCardString += cardHeaderStart;
-			leagueTableCardString += strong + leagueNames[gameData.displayLeagueLevel] + " " + [gameData.displayLeagueID] + strongEnd;
-			leagueTableCardString += printleagueTable(gameData.leagues[gameData.displayLeagueLevel][gameData.displayLeagueID]);
-		leagueTableCardString += divEnd;
-		leagueTableCardString += cardBodyStart;
-			
-		leagueTableCardString += divEnd;
-	leagueTableCardString += divEnd;
-	return leagueTableCardString;
-};
-
-
-//displayLeagueLevel
-//displayLeagueID
 
 
 function setClubMenu() {
