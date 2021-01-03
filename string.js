@@ -13,6 +13,9 @@ function setDivID(setID) {
 }
 var sectionStart = "<div class=\"row\">";
 var rowStart = "<div class=\"row\">";
+var colStart = "<div class=\"col\">";
+var containerStart = "<div class=\"container\">";
+var divStart = "<div>";
 var divEnd = "</div>";
 var br = "<br />";
 var sectionEnd = "</div>";
@@ -25,10 +28,6 @@ var strong = "<strong>";
 var strongEnd = "</strong>";
 var buttonEnd = "</button>";
 
-//Bootstrap GUI strings
-var containerStart = "<div class=\"container\">";
-var rowStart = "<div class=\"row\">";
-var colStart = "<div class=\"col\">";
 
 //Card
 
@@ -36,6 +35,12 @@ var cardStart = "<div class=\"card\">";
 var cardStart50 = "<div class=\"card w-50\">";
 function cardStart50SetID(setID) {
 	return "<div class=\"card w-50\" id=\"" + setID + "\">";
+}
+function cardStart75SetID(setID) {
+	return "<div class=\"card w-75\" id=\"" + setID + "\">";
+}
+function cardStart100SetID(setID) {
+	return "<div class=\"card w-100\" id=\"" + setID + "\">";
 }
 var cardStart75 = "<div class=\"card w-75\">";
 var cardHeaderStart = "<div class=\"card-header\">";
@@ -70,8 +75,19 @@ function setDrowpdownMenu(idString) {
 	return "<div class=\"dropdown-menu\" aria-labelledby=" + idString +">";
  }
 function setDropdownItemID(dropdownItemValue, dropdownItemLabel, dropDownID) {
-	return "<div class=\"dropdown-item\" id=" + dropDownID + " value=" + dropdownItemValue + " onmouseup=\"mUp(this)\" >" + dropdownItemLabel + "</div>";
+	return "<div class=\"dropdown-item\" id=\"" + dropDownID + "\" title=\"" + dropdownItemValue + "\" onmouseup=\"mUp(this)\" >" + dropdownItemLabel + "</div>";
 }
+/*
+function setDropdownItemDataset(dropdownItemValue, dropdownItemLabel, dropDownID) {
+	return "<div class=\"dropdown-item\" id=\"" + dropDownID + "\" data-selectedLeagueLevel=\"" + dropdownItemValue + "\" onmouseup=\"mUp(this)\" >" + dropdownItemLabel + "</div>";
+}
+*/
+/*
+id="electric-cars"
+	data-columns="3"
+	data-index-number="12314"
+	data-parent="cars">
+*/
 
 
 
