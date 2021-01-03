@@ -11,9 +11,9 @@ var gameData = {
 	leagues: [],
 	currentLeague: "",
 	currentLeagueLevel: 0,
-	currentLeagueID: 0,
+	currentLeagueDivision: 0,
 	displayLeagueLevel: 0,
-	displayLeagueID: 0,
+	displayLeagueDivision: 0,
 	lastFrame: -1
 }
 
