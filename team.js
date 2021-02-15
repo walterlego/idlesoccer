@@ -10,6 +10,7 @@ var team = function(isHuman, leagueLevel) {
 		this.players.push(newKicker);
 	}
 	//if(this.isHuman == false) {
+	this.formation = pickFormation(CHOOSENEW);
 	setTeamFormation(this);
 	//}
 	
@@ -24,43 +25,49 @@ var team = function(isHuman, leagueLevel) {
 // Tactics
 ///////////////////////////////////////////
 
-function setTeamFormation(setTeam) {
+function pickFormation(setFormation) {
 	//Random Formation
-	var choseFormation = Math.random() * 5;
-	var Defenders, Midfielders, Strikers = 0;
-	if(setTeam.players.length<11) {
-		fillUpTeam(setTeam);
-	}
-	if (choseFormation < 1) {
+	return Math.floor(Math.random() * 6);	
+
+}
+
+function setTeamFormation(setTeam) {
+	let Defenders, Midfielders, Strikers = 0;
+	if (setTeam.formation == F433) {
 		//4 3 3
 		Defenders = 4;
 		Midfielders = 3;
 		Strikers = 3;
-	} else if (choseFormation < 2) {
+	} else if (setTeam.formation == F343) {
 		//3 4 3
 		Defenders = 3;
 		Midfielders = 4;
 		Strikers = 3;
-	} else if (choseFormation < 3) {
+	} else if (setTeam.formation == F442) {
 		//4 4 2
 		Defenders = 4;
 		Midfielders = 4;
 		Strikers = 2;
-	} else if (choseFormation < 4) {
+	} else if (setTeam.formation == F451) {
 		//4 5 1
 		Defenders = 4;
 		Midfielders = 5;
 		Strikers = 1;
-	} else {
+	} else if (setTeam.formation == F352) {
 		//3 5 2
 		Defenders = 3;
 		Midfielders = 5;
 		Strikers = 2;
+	} else {
+		//3 6 1
+		Defenders = 3;
+		Midfielders = 6;
+		Strikers = 1;
 	}
-	var theChosenOne = -1;
-	var maxValue = -1;
-	var maxOffence = -1;
-	var compareBuffer = -1;
+	let theChosenOne = -1;
+	let maxValue = -1;
+	let maxOffence = -1;
+	let compareBuffer = -1;
 	setTeam.hasKeeper = false;
 	setTeam.squadCount = 0;
 	if(setTeam.players.length>10) {
@@ -144,7 +151,7 @@ function toggleKickerPosition(getTeam, getKicker) {
 			getKicker.benchCount++;
 		}
 	} else {
-		if (gameData.player.club.team.squadCount < 11) {
+		if (getTeam.squadCount < 11) {
 			if (getTeam.hasKeeper == false) {
 				getKicker.position = KEEPER;
 				getTeam.hasKeeper = true;
@@ -209,6 +216,7 @@ function fillUpTeam(addTeam, leagueLevel) {
 		youngster.skill = (Math.random() * Math.pow(1,0.1) + Math.random() * Math.pow(1,0.1)) / 2;
 		youngster.talent = (Math.random() * Math.pow(1,0.1) + Math.random() * Math.pow(1,0.1)) / 2;
 		youngster.age= Math.floor(Math.random()*6)+22;
+		youngster.salary = calculateKickerSalary(youngster);
 		console.log("Fehlender Spieler hinzugefügt");
 		addTeam.players.push(youngster);
 	}
@@ -219,6 +227,14 @@ function firePlayer(fireteam, firePlayer) {
 	console.log("PlayerID", fireteam.players.length);
 	for (iterPlayers = 0; iterPlayers < fireteam.players.length; iterPlayers++) {
 		if (fireteam.players[iterPlayers].playerId == client.value) {	//player retires
+			if (fireteam.players[iterPlayers].position < BENCH){
+				fireteam.squadCount--;
+				if(fireteam.players[iterPlayers].position == KEEPER) {
+					fireteam.hasKeeper = false;
+				}
+			} else if (fireteam.players[iterPlayers].position == BENCH){
+				fireteam.benchCount--;
+			}			
 			console.log("Pre", fireteam.players, iterPlayers);
 			fireteam.players.splice(iterPlayers, 1);
 			console.log("Post", fireteam.players);
@@ -242,11 +258,23 @@ function teamGameDay(dgTeam, gameDayLeague) {
 ////// Next Season
 ////////////////////////////////////////////////////////////////////////////////////
 
-function teamNextSeason(teamNextSeason) {
+function teamNextSeason(teamNextSeason, clubNextSeason) {
 	for (iterPlayers = 0; iterPlayers < teamNextSeason.players.length; iterPlayers++) {
 		if (kickerNextSeason(teamNextSeason.players[iterPlayers])<0) {	//player retires
 			teamNextSeason.players.splice(iterPlayers, 1);
 		}
+	}
+	if(teamNextSeason.players.length<11) {
+		fillUpTeam(teamNextSeason);
+	}
+	let newFormationTest = 0;
+	if(clubNextSeason.mood<0) {
+		newFormationTest = 0.4;
+	} else {
+		newFormationTest = 0.75;
+	}
+	if(newFormationTest>Math.random()) {
+		teamNextSeason.formation = Math.floor(Math.random() * 6);
 	}
 	setTeamFormation(teamNextSeason);
 };
@@ -363,18 +391,4 @@ function renderCancelContract(rCContract) {
 	return mainMenuString;
 }
 
-
-function sortTeam() {
-	/*
-	var sNumber = 0;
-	for (iPosition = KEEPER; iPosition < INJURED; iPosition++){
-		for (i=0; i< gameData.player.club.team.players.length; i++) {
-			if (gameData.player.club.team.players[i].position == iPosition){
-				sNumber++;
-				gameData.player.club.team.players[i].rueckenNummer = sNumber;
-			}
-		}
-	}
-	*/
-};
 

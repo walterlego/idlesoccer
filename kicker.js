@@ -155,9 +155,6 @@ function kickerNextSeason(getKicker) {
 
 function calculateKickerSalary(getKicker) {
 	getKicker.salary = Math.pow((getKicker.skill+1),SALARYCONSTANT);
-	if (isNaN(getKicker.salary)) {
-		console.log(getKicker);
-	}
 	return getKicker.salary;
 };
 
@@ -242,22 +239,3 @@ function renderPlayerContract(rPC) {
 	return mainMenuString;
 };
 
-/*
-
-function renderCancelContract() {
-	mainMenuString = renderTeamMenu();
-	mainMenuString += sectionStart;
-	mainMenuString += colStart;
-	mainMenuString += "<div id=\"selectSingleKicker\" value="+ gameData.player.club.team.players[client.value].playerId + "><strong>" + gameData.player.club.team.players[client.value].firstname + " " + gameData.player.club.team.players[client.value].lastname + "</strong><br />Position: " + positionNames[gameData.player.club.team.players[client.value].position] + "<br />Alter: " + gameData.player.club.team.players[client.value].age + "</div>";
-	mainMenuString += colEnd;
-	mainMenuString += colStart;
-	mainMenuString += Math.round(gameData.player.club.team.players[client.value].defense*gameData.player.club.team.players[client.value].skill*10000)/100 + "% defensiv" + "<br />" + 
-						Math.round((1-gameData.player.club.team.players[client.value].defense)*gameData.player.club.team.players[client.value].skill*10000)/100 + "% offensiv";
-	mainMenuString += colEnd;
-	mainMenuString += colStart;
-	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"confirmCancelContract\" value="+ gameData.player.club.team.players[client.value].playerId + " >" + "Confirm contract cancellation" + "</button>";
-	mainMenuString += colEnd;
-	mainMenuString += sectionEnd;
-	return mainMenuString;
-}
-*/

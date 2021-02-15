@@ -36,16 +36,6 @@ function setUp() {
 	document.getElementById("navBarClubName").innerHTML = gameData.player.club.name;
 };
 
-function nextMonth() {
-	for (lL=0; lL < gameData.leagues.length; lL++) {
-		for (lI=0; lI < gameData.leagues[lL].length; lI++) {
-			for (i=0; i < gameData.leagues[lL][lI].clubs.length; i++) {
-				clubNextMonth(gameData.leagues[lL][lI].clubs[i]);
-			}
-		}
-	}
-}
-
 function pauseGame() {
 	if (gameData.dateLoop === null) {
 		gameData.dateLoop = window.setInterval(nextDay, GAMEDAY);
@@ -57,48 +47,66 @@ function pauseGame() {
 	}
 }
 
+//navBarClubName document.getElementById("navBarClubName").innerHTML = "Continue";
+
 function nextDay() {
 	gameData.gameDate.setDate(gameData.gameDate.getDate() + 1);
 	//sell Tickets
-	ticketUpdate(gameData.player.club);
+	//ticketUpdate(gameData.player.club);
 	//next month?
 	if (gameData.gameDate.getDate() ==1) {
 		nextMonth();
+		if (gameData.gameDate.getMonth() ==1) {
+			nextYear();
+		}
 	}
 	for (lL=0; lL < gameData.leagues.length; lL++) {
+		gameData.currentLeagueLevel = lL;
 		for (lI=0; lI < gameData.leagues[lL].length; lI++) {
-			gameData.currentLeague = gameData.leagues[lL][lI];
-			gameData.currentLeagueLevel = lL;
 			gameData.currentLeagueDivision = lI;
+			gameData.currentLeague = gameData.leagues[lL][lI];
 			if (gameData.currentLeague.gameDate[gameData.currentLeague.currentGameDay].getDate() == gameData.gameDate.getDate()) {//.getTime() == gameData.gameDate.getTime()) {
 				//Game day
 				gameDay();
-				
-
 			} else {
 				//Training
 				trainingDay();
-				
 			}
 		}
 	}
 	if (gameData.currentLeague.currentGameDay == 33) {
 		if (gameData.gameDate.getMonth() == 7) {
-			console.log("Saisonende");
-			console.log(gameData.leagues[gameData.player.leagueLevel][gameData.player.leagueDivision]);
-			
 			//Ligen abschließen, auf- und absteiger ermitteln und ablegen
 			leagueNextSeason();
 		}
 	}
 }
 
+function nextMonth() {
+	for (lL=0; lL < gameData.leagues.length; lL++) {
+		for (lI=0; lI < gameData.leagues[lL].length; lI++) {
+			for (i=0; i < gameData.leagues[lL][lI].clubs.length; i++) {
+				clubNextMonth(gameData.leagues[lL][lI].clubs[i]);
+			}
+		}
+	}
+}
+
+function nextYear() {
+	for (lL=0; lL < gameData.leagues.length; lL++) {
+		for (lI=0; lI < gameData.leagues[lL].length; lI++) {
+			for (i=0; i < gameData.leagues[lL][lI].clubs.length; i++) {
+				clubNextYear(gameData.leagues[lL][lI].clubs[i]);
+			}
+		}
+	}
+}
 
 function updateFrame() {
 	//gameData.currentCircle = new Date();
 	//gameData.frameTime = gameData.currentCircle-gameData.lastCircle;
 	gui = "";
-	document.getElementById("headLine").innerHTML = printStatusLine();//strong + gameData.player.club.name + "</strong> " + leagueNames[gameData.player.leagueLevel] + " " + gameData.player.leagueDivision + " " + printGameDate();
+	document.getElementById("headLine").innerHTML = printStatusLine();
 	if (gameData.lastFrame != client.gui) {	// Screen is rendered for the first time
 		if (client.gui == CLUB) {
 		//Build html of game
@@ -177,26 +185,6 @@ function updateFrame() {
 	}
 };
 
-/*
-function initGUI() {
-	
-	//mainMenuString = "<nav class=\"navbar navbar-default fixed-top\"><div class=\"container-fluid\"><div class=\"navbar-header\"></div><ul class=\"nav navbar-nav\"><li class=\"active\"><a href=\"#\">Home</a></li><li><a href=\"#\">Page 1</a></li><li><a href=\"#\">Page 2</a></li><li><a href=\"#\">Page 3</a></li></ul></div></nav>";
-		
-	mainMenuString = sectionStart;
-	mainMenuString += colStart;
-	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"switchToClub\">Verein</button>";
-	mainMenuString += colEnd;
-	mainMenuString += colStart;
-	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"switchToTeam\">Team</button>";
-	mainMenuString += colEnd;
-	mainMenuString += colStart;
-	mainMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"switchToStadium\">Stadion</button>";
-	mainMenuString += colEnd;
-	mainMenuString += sectionEnd;
-
-	return mainMenuString;
-};
-*/
 
 
 //////////////////////////////////////////
@@ -255,12 +243,18 @@ function mUp(obj) {
 		client.gui = MARKETING;
 	} else if (obj.id == "upgradePerimeterAdvertising"){
 		upgradePerimeterAdvertising(gameData.player.club);
+	} else if (obj.id == "downgradePerimeterAdvertising"){
+		gameData.player.club.perimeterAdvertising--;
 	} else if (obj.id == "switchToPersonnel"){
 		client.gui = PERSONNEL;
 	} else if (obj.id == "upgradeCoach"){
 		upgradeCoach(gameData.player.club);
+	} else if (obj.id == "downgradeCoach"){
+		gameData.player.club.coach--;
 	} else if (obj.id == "upgradeYouthAcademy"){
 		clubUpgradeYouthAcademy(gameData.player.club);
+	} else if (obj.id == "downgradeYouthAcademy"){
+		gameData.player.club.youthAcademy--;
 	} else if (obj.id == "upgradeTerraceCapacity"){
 		upgradeTerraceSeating(gameData.player.club, obj.value);
 	} else if (obj.id == "upgradeTerraceComfort"){
@@ -270,10 +264,10 @@ function mUp(obj) {
 	} else if (obj.id == "switchToLeagueview"){
 		client.gui = LEAGUEVIEW;
 		gameData.displayLeagueLevel = gameData.player.club.leagueLevel;
-		gameData.displayLeagueDivision = gameData.player.club.leagueDivision;
+		gameData.displayLeagueDivision = gameData.player.club.leagueDivision; //gameData.player.leagueDivision
 	} else if (obj.id == "chooseLeagueLevel"){
 		setLeagueLevelDisplay(obj.title);
-		document.getElementById("game").innerHTML = renderLeagueViewMenu();
+		//document.getElementById("game").innerHTML = renderLeagueViewMenu();
 		//console.log("Ligalevel", obj.title);
 		//console.log(obj, obj.title);
 	} else if (obj.id == "chooseLeagueDivision"){
@@ -283,7 +277,7 @@ function mUp(obj) {
 	} else if (obj.id == "displayOwnLeague"){
 		gameData.displayLeagueLevel = gameData.player.club.leagueLevel;
 		gameData.displayLeagueDivision = gameData.player.club.leagueDivision;
-		document.getElementById("game").innerHTML = renderLeagueViewMenu();
+		//document.getElementById("game").innerHTML = renderLeagueViewMenu();
 	} else if (obj.id == "switchToGameDays"){
 		client.gui = GAMEDAYS;
 	}
@@ -337,28 +331,7 @@ window.onclick = function(event) {
     }
   }
 }
-/*
-// When the user clicks on the button, 
-//toggle between hiding and showing the dropdown content
-function myFunction() {
-    document.getElementById("cityDropdown").classList.toggle("show");
-}
 
-// Close the dropdown menu if the user clicks outside of it
-window.onclick = function(event) {
-  if (!event.target.matches('.dropbtn')) {
-
-    var dropdowns = document.getElementsByClassName("dropdown-content");
-    var i;
-    for (i = 0; i < dropdowns.length; i++) {
-      var openDropdown = dropdowns[i];
-      if (openDropdown.classList.contains('show')) {
-        openDropdown.classList.remove('show');
-      }
-    }
-  }
-}
-*/
 
 function sortByKey(array, key) {
     return array.sort(function(a, b) {
@@ -376,28 +349,24 @@ function loadGame() {
 
 function printStatusLine() {
 	var statusLineString = listGroupStart + listGroupItem;
-	statusLineString += strong + gameData.player.club.name + strongEnd + leagueNames[gameData.player.leagueLevel] + " " + gameData.player.leagueDivision + " " + "Kontostand: " + gameData.player.club.cash.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + " " + printGameDate();
+	statusLineString += strong + gameData.player.club.name + strongEnd + leagueNames[gameData.player.club.leagueLevel] + " " + gameData.player.club.leagueDivision + " " + "Kontostand: " + gameData.player.club.cash.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + " " + printGameDate();
 	statusLineString += listItemEnd + listGroupEnd;
 	return statusLineString;
 }
 
 
 function shuffle(array) {
-  var currentIndex = array.length, temporaryValue, randomIndex;
-
-  // While there remain elements to shuffle...
-  while (0 !== currentIndex) {
-
-    // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
-
-    // And swap it with the current element.
-    temporaryValue = array[currentIndex];
-    array[currentIndex] = array[randomIndex];
-    array[randomIndex] = temporaryValue;
-  }
-
+	var currentIndex = array.length, temporaryValue, randomIndex;
+	// While there remain elements to shuffle...
+	while (0 !== currentIndex) {
+		// Pick a remaining element...
+		randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex -= 1;
+		// And swap it with the current element.
+		temporaryValue = array[currentIndex];
+		array[currentIndex] = array[randomIndex];
+		array[randomIndex] = temporaryValue;
+	}
   return array;
 }
 

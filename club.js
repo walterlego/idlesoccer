@@ -3,9 +3,9 @@ var club = function(isHuman, leagueLevel, leagueDivision) {
 	this.isHuman = isHuman;
 	this.leagueLevel = leagueLevel;
 	this.leagueDivision = leagueDivision;
-	this.reputation = (18-this.leagueLevel) * (18-this.leagueLevel);
-	//console.log("Reputation ", leagueNames[this.leagueLevel], this.reputation);
-	this.cash = Math.floor(Math.pow(2,(18-this.leagueLevel))*50);
+	this.reputation = ((gameData.leagueStructure.length-this.leagueLevel)*REPUTATIONLEAGUEFACTOR) + (Math.random()*REPUTATIONPLACEMENTFACTOR*18);
+	//console.log("Liga: ", this.leagueLevel, this.reputation);
+	this.mood = 0;
 	//name
 	this.name = clubPrefix[Math.floor(Math.random()*clubPrefix.length)] + " ";
 	if(Math.random()>0.7){
@@ -24,48 +24,170 @@ var club = function(isHuman, leagueLevel, leagueDivision) {
 	this.name += CityData[cityCandidate][0] + " ";
 	if(Math.random()>0.8){
 		this.name += "0" + (Math.floor(Math.random()*9)+1);
-	};
-
+	};	
+	/////////////////////////////////////////////
+	///////////////Finances
+	/////////////////////////////////////////////
+	this.cash = Math.floor(Math.pow(2,(gameData.leagueStructure.length-this.leagueLevel))*STARTCASH);
 	
-	//Team	
+	
+	////Staff
+	
+	////Marketing
+	
+	//Perimeter Advertising
+	this.perimeterAdvertising = gameData.leagueStructure.length-(this.leagueLevel+1);
+	this.perimeterAdvertisingBalance = getPerimeterAdvertisingMonthlyBalance(this,0);
+	this.perimeterAdvertisingRevenue = getPerimeterAdvertisingMonthlyRevenue(this,0);
+	this.perimeterAdvertisingCost = getPerimeterAdvertisingMonthlyCost(this,0);
+
+	/////////////////////////////////////////////
+	///////////////Team	
+	/////////////////////////////////////////////
 	this.team = new team(isHuman, leagueLevel);
 	//console.log("Team added");
 	//Youth Academy
-	this.youthAcademy = 1;
+	this.youthAcademy = gameData.leagueStructure.length-leagueLevel-1;
+	this.costYouthAcademy = getYouthAcademyMonthlyCost(this);
 	
 	//STAFF
-	this.coach = 1;
-	this.coachSalary = 0;
+	this.coach = gameData.leagueStructure.length-leagueLevel-1;
+	this.coachSalary = calculateCoachSalary(this);
 	
-	//Marketing
-	this.perimeterAdvertising = 0;
-	this.perimeterAdvertisingRevenue = 0;
-	this.perimeterAdvertisingMaintenance = 0;
+
 	
+	/////////////////////////////////////////////
+	///////////////Infrastructure
+	/////////////////////////////////////////////
 	//stadium
 	this.stadium = new stadium();
-	//console.log("erstelle Stadion:", this.stadium);
+	
 	//Ticketing
 	this.ticketVendor = 0; 
 	this.ticketVendorRate = 0;
-
+	this.ticketDemandLeague = -1;
+	this.seasontickets = 0;
+	this.stadiumOccupationSeasonGame = [];
+	
 	/////////////////////////////////////////////
 	///////////////Ligastatistik
 	/////////////////////////////////////////////
 	this.leaguePoints = 0;
 	this.leagueGoalsConceded = 0;
 	this.leagueGoalsScored = 0;
+	this.leaguePosition = -1;
 	
-	this.costLastMonth = 0;
-	this.costCurrentMonth = 0;
-	this.revenueCurrentMonth = 0;
-	this.revenueLastMonth = 0;
+	
+	/////////////////////////////////////////////
+	/////////////// Bookkeeping
+	/////////////////////////////////////////////
+	
+	//revenue
+	this.revenueMonth = [0];
+	this.revenueSeason = [0];
+	this.revenueYear = [0];
+	//cost
+	this.costMonth = [0];
+	this.costSeason = [0];
+	this.costYear = [0];
+	//investment
+	this.investmentSeason = [0];
+	this.investmentMonth = [0];
+	this.investmentYear = [0];
+	//ticketing
+	this.ticketRevenueSeason = [0];
+	this.ticketRevenueMonth = [0];
+	this.ticketRevenueYear = [0];
+	
+	this.ticketsSoldSeason = [0];
+	this.ticketsSoldMonth = [0];
+	this.ticketsSoldYear = [0];
+	
+	//stadiumOccupation
+	this.stadiumOccupationSeason = [0];
+	this.stadiumOccupationMonth = [0];
+	this.stadiumOccupationYear = [0];
+	
+	//marketing
+	this.marketingRevenueSeason = [0];
+	this.marketingRevenueMonth = [0];
+	this.marketingRevenueYear = [0];
+	
+	this.marketingCostSeason = [0];
+	this.marketingCostMonth = [0];
+	this.marketingCostYear = [0];
+	
+	//infrastructure
+	this.infrastructureRevenueSeason = [0];
+	this.infrastructureRevenueMonth = [0];
+	this.infrastructureRevenueYear = [0];
+	
+	this.infrastructureCostSeason = [0];
+	this.infrastructureCostMonth = [0];
+	this.infrastructureCostYear = [0];
+	
+	////Squad
+	this.squadCostSeason = [0];
+	this.squadCostMonth = [0];
+	this.squadCostYear = [0];
+	
+
 	//return this;
 };
 
-function loadClub(loadClub) {
-	
+//////////////////////////////////////////////////
+///// Bookkeeping
+//////////////////////////////////////////////////
+
+function clubEarn(eClub, eCash) {
+	eClub.cash += eCash;
+	eClub.revenueSeason[eClub.revenueSeason.length-1] += eCash;
+	eClub.revenueMonth[eClub.revenueMonth.length-1] += eCash;
+	eClub.revenueYear[eClub.revenueYear.length-1] += eCash;
 }
+
+function clubPay(eClub, eCash) {
+	eClub.cash -= eCash;
+	eClub.costSeason[eClub.costSeason.length-1] += eCash;
+	eClub.costMonth[eClub.costMonth.length-1] += eCash;
+	eClub.costYear[eClub.costYear.length-1] += eCash;
+}
+
+function clubEarnMarketing(eClub, eCash) {
+	eClub.marketingRevenueSeason[eClub.marketingRevenueSeason.length-1] += eCash;
+	eClub.marketingRevenueMonth[eClub.marketingRevenueMonth.length-1] += eCash;
+	eClub.marketingRevenueYear[eClub.marketingRevenueYear.length-1] += eCash;
+	clubEarn(eClub, eCash);
+}
+
+function clubEarnTicketing(eClub, eCash) {
+	eClub.ticketRevenueSeason[eClub.ticketRevenueSeason.length-1] += eCash;
+	eClub.ticketRevenueMonth[eClub.ticketRevenueMonth.length-1] += eCash;
+	eClub.ticketRevenueYear[eClub.ticketRevenueYear.length-1] += eCash;
+	clubEarn(eClub, eCash);
+}
+
+function clubInvest(eClub, eCash) {
+	eClub.cash -= eCash;
+	eClub.investmentSeason[eClub.investmentSeason.length-1] += eCash;
+	eClub.investmentMonth[eClub.investmentMonth.length-1] += eCash;
+	eClub.investmentYear[eClub.investmentYear.length-1] += eCash;
+}
+
+function clubPayInfrastructure(eClub, eCash) {
+	eClub.infrastructureCostSeason[eClub.infrastructureCostSeason.length-1] += eCash;
+	eClub.infrastructureCostMonth[eClub.infrastructureCostMonth.length-1] += eCash;
+	eClub.infrastructureCostYear[eClub.infrastructureCostYear.length-1] += eCash;
+	clubPay(eClub, eCash);
+}
+
+function clubPayMarketing(eClub, eCash) {
+	eClub.marketingCostSeason[eClub.marketingCostSeason.length-1] += eCash;
+	eClub.marketingCostMonth[eClub.marketingCostMonth.length-1] += eCash;
+	eClub.marketingCostYear[eClub.marketingCostYear.length-1] += eCash;
+	clubPay(eClub, eCash);
+}
+
 
 //gameDay
 function clubGameDay(clubGameDay, gameDayLeague) {
@@ -74,8 +196,12 @@ function clubGameDay(clubGameDay, gameDayLeague) {
 }
 
 function clubGameDayHome(homeClub) {
-	//console.log("clubGameDayHome");
+	ticketGameDay(homeClub);
 	stadiumGameDay(homeClub.stadium);
+	if(homeClub.isHuman) {
+		console.log(homeClub.name);
+	}
+	getLeagueDemand(homeClub);
 }
 
 //trainingday
@@ -90,51 +216,102 @@ function trainingdayClub(trainingClub) {
 /////////////////////////////////////////////
 
 function clubNextMonth(nMClub) {
-	var bufferSum = 0;
-	if (nMClub.perimeterAdvertising > 1) {
-		nMClub.cash += getPerimeterAdvertisingMonthlyRevenue(nMClub);
-		nMClub.cash -= getPerimeterAdvertisingMonthlyCost(nMClub);
+	let bufferSum = 0;
+	if (nMClub.perimeterAdvertising > 0) {
+		perimeterAdvertisingNextMonth(nMClub);
+	} else {
+		nMClub.marketingRevenueMonth.push(0);
+		nMClub.marketingCostMonth.push(0);
 	}
 	if (nMClub.coach > 1) {
-		bufferSum = nMClub.coachSalary;
-		if(nMClub.cash < bufferSum) {
-			downgradeCoach(nMClub);
-			bufferSum = nMClub.coachSalary;
-		}
-		nMClub.cash -= bufferSum;
-		nMClub.costCurrentMonth += bufferSum;
-		//Math.pow(COACHSALARYCONSTANT,(COACHSALARYEXPONENT*nMClub.coach));
+		coachNextMonth(nMClub);
 	}
+	if (nMClub.youthAcademy > 1) {
+		youthAcademyNextMonth(nMClub);
+	}
+	//kicker salaries
 	for (pSalary=0; pSalary<nMClub.team.players.length; pSalary++) {
 		bufferSum = nMClub.team.players[pSalary].salary;
-		nMClub.cash -= bufferSum;
-		nMClub.costCurrentMonth += bufferSum;
+		nMClub.squadCostSeason[nMClub.squadCostSeason.length-1] += bufferSum;
+		nMClub.squadCostMonth[nMClub.squadCostMonth.length-1] += bufferSum;
+		nMClub.squadCostYear[nMClub.squadCostYear.length-1] += bufferSum;
+		clubPay(nMClub, bufferSum);
 	}
-	nMClub.costLastMonth = nMClub.costCurrentMonth;
-	nMClub.costCurrentMonth = 0;
-	nMClub.revenueLastMonth = nMClub.revenueCurrentMonth;
-	nMClub.revenueCurrentMonth = 0;
+	nMClub.squadCostMonth.push(0);
+	nMClub.costMonth.push(0);
+	
+	//investment
+	nMClub.investmentMonth.push(0);
+	
+	//revenue
+	nMClub.revenueMonth.push(0);
+	
+	//ticketing
+	nMClub.ticketsSoldMonth.push(0);
+	nMClub.ticketRevenueMonth.push(0);
+	nMClub.stadiumOccupationMonth.push(0);
+	//infrastructure
+	nMClub.infrastructureRevenueMonth.push(0);
+	nMClub.infrastructureCostMonth.push(0);	
+}
+
+
+
+
+
+function clubNextYear(nMClub) {
+	//revenue
+	nMClub.revenueYear.push(0);
+	//cost
+	nMClub.costYear.push(0);
+	//investment
+	nMClub.investmentYear.push(0);
+	//ticketing
+	nMClub.ticketRevenueYear.push(0);
+	nMClub.ticketsSoldYear.push(0);
+	nMClub.stadiumOccupationYear.push(0);
+	//marketing
+	nMClub.marketingRevenueYear.push(0);
+	nMClub.marketingCostYear.push(0);
+	//infrastructure
+	nMClub.infrastructureRevenueYear.push(0);
+	nMClub.infrastructureCostYear.push(0);
+	////Squad
+	nMClub.squadCostYear.push(0);
 }
 
 
 function clubNextSeason(nMClub, nMLeague) {
-	for (searchClub = 0; searchClub < nMLeague.clubs.length; searchClub++) {
-		if (nMLeague.clubs[searchClub].name == nMClub.name) {
-			nMClub.reputation = 0.75 * nMClub.reputation + 0.25 * ((18-nMClub.leagueLevel) * (18-searchClub));
-			//console.log("Liga: ", gameData.currentLeague.clubs.length, "Tabellenplatz: ", searchClub, "Club: ", gameData.currentLeague.clubs[searchClub].name, "Reputation: ", nMClub.reputation);
-		}
-	}
+	nMClub.reputation = updateClubReputation(nMClub, nMLeague);
+	nMClub.perimeterAdvertisingRevenue = getPerimeterAdvertisingMonthlyRevenue(nMClub,0);
+	nMClub.perimeterAdvertisingCost = getPerimeterAdvertisingMonthlyCost(nMClub,0);
+	nMClub.perimeterAdvertisingBalance = getPerimeterAdvertisingMonthlyBalance(nMClub,0);
 	nMClub.leaguePoints = 0;
 	nMClub.leagueGoalsConceded = 0;
 	nMClub.leagueGoalsScored = 0;
 	nMClub.leagueGoalsScored = 0;
-	nMClub.leagueLevel = nMLeague.leagueLevel;
-	nMClub.leagueDivision = nMLeague.leagueDivision;
-	if(nMClub.isHuman) {
-		gameData.player.leagueLevel = nMLeague.leagueLevel;
-		gameData.player.leagueDivision = nMLeague.leagueDivision;
-	}
-	var addNumOfKickers = Math.round(Math.random()*(1+nMClub.youthAcademy));
+	
+	//bookkeeping
+	//revenue
+	nMClub.revenueSeason.push(0);
+	//cost
+	nMClub.costSeason.push(0);
+	//investment
+	nMClub.investmentSeason.push(0);
+	//ticketing
+	nMClub.ticketRevenueSeason.push(0);
+	nMClub.ticketsSoldSeason.push(0);
+	nMClub.stadiumOccupationSeason.push(0);
+	//marketing
+	nMClub.marketingRevenueSeason.push(0);
+	nMClub.marketingCostSeason.push(0);
+	//infrastructure
+	nMClub.infrastructureRevenueSeason.push(0);
+	nMClub.infrastructureCostSeason.push(0);
+	////Squad
+	nMClub.squadCostSeason.push(0);
+
+	let addNumOfKickers = Math.round(Math.random()*(1+nMClub.youthAcademy));
 	//console.log("Nachwuchsspieler: ", addNumOfKickers);
 	for (addPlayers = 0; addPlayers<addNumOfKickers; addPlayers++) {
 		addJuniorKicker(nMClub);
@@ -142,9 +319,23 @@ function clubNextSeason(nMClub, nMLeague) {
 	teamNextSeason(nMClub.team, nMClub);
 }
 
-function clubPromotion(promotedClub) {
-	promotedClub.leagueLevel--;
-	promotedClub.leagueDivision = Math.floor(promotedClub.leagueDivision/2);
+
+function updateClubReputation(nMClub, nMLeague) {
+	let newReputation = -1;
+	for (searchClub = 0; searchClub < nMLeague.table.length; searchClub++) {
+		//for (leaguePosition = 0; leaguePosition < nMLeague.table.length; leaguePosition++) {		
+			if (nMLeague.clubs[nMLeague.table[searchClub]].name == nMClub.name) {
+				newReputation = REPUTATIONSMOOTHING * nMClub.reputation + ((1-REPUTATIONSMOOTHING) * (((gameData.leagueStructure.length-nMClub.leagueLevel)*REPUTATIONLEAGUEFACTOR) + ((nMLeague.table.length - searchClub)*REPUTATIONPLACEMENTFACTOR)));
+				//console.log("Liga: ", leagueNames[nMLeague.leagueLevel], "Tabellenplatz: ", searchClub, "Club: ", gameData.currentLeague.clubs[searchClub].name, "Club: ", nMClub.name);
+				if(newReputation>nMClub.reputation) {
+					nMClub.mood = 1;
+				} else {
+					nMClub.mood = -1;
+				}
+			}
+		//}
+	}
+	return newReputation;
 }
 
 
@@ -154,36 +345,86 @@ function clubPromotion(promotedClub) {
 //////////////////////////////////////////////////
 
 function upgradeCoach(cClub) {
-	if (cClub.cash >= coachPrice[cClub.coach]) {
-		cClub.cash -= coachPrice[cClub.coach];
-		cClub.coach++;
-		cClub.coachSalary = Math.pow(COACHSALARYCONSTANT,(COACHSALARYEXPONENT*cClub.coach));
-		console.log(cClub.coachSalary);
+	if(cClub.coach<20) {
+		if (cClub.cash >= coachPrice[cClub.coach]) {
+			clubPay(cClub, coachPrice[cClub.coach]);
+			cClub.coach++;
+			cClub.coachSalary = calculateCoachSalary(cClub);
+			console.log(cClub.coachSalary);
+		} else {
+			console.log("upgradeCoach zu teuer");
+		}
 	} else {
-		alert("zu teuer");
+		console.log(cClub.coach)
 	}
+	console.log("Neues Coach-Level: ", cClub.coach)
 }
+
+function calculateCoachSalary(cLevel) {
+	return coachSalary[cLevel.coach];
+}
+
 
 function downgradeCoach(cClub) {
 	if (cClub.coach > 1) {
 		cClub.coach--;
-		cClub.coachSalary = Math.pow(COACHSALARYCONSTANT,(COACHSALARYEXPONENT*cClub.coach));
-		console.log("Coach downgrade auf ", cClub.coachSalary);
+		cClub.coachSalary = calculateCoachSalary(cClub);
+		//console.log("Coach downgrade auf ", cClub.coachSalary);
 	}
 }
+
+function coachNextMonth(nMClub) {
+	let bufferSum = nMClub.coachSalary;
+	if(nMClub.cash < bufferSum) {
+		downgradeCoach(nMClub);
+		//console.log("coach zu teuer. Cash: ", nMClub.cash, "Gehalt: ", bufferSum);
+		bufferSum = nMClub.coachSalary;
+	}
+	clubPay(nMClub, bufferSum);
+}
+
 
 //////////////////////////////////////////////////
 //// Youth
 //////////////////////////////////////////////////
 
 function clubUpgradeYouthAcademy(upgradeYAC) {
-	if (upgradeYAC.cash >= youthAcademyPrice[upgradeYAC.youthAcademy]) {
-		upgradeYAC.cash -= youthAcademyPrice[upgradeYAC.youthAcademy];
-		upgradeYAC.youthAcademy++;
-	} else {
-		alert("zu teuer");
+	if(upgradeYAC.youthAcademy<20) {
+		let bufferSum = youthAcademyPrice[upgradeYAC.youthAcademy];
+		console.log("Pre", upgradeYAC.youthAcademy);
+		console.log("Youth academy cost per month", upgradeYAC.costYouthAcademy);
+		if (upgradeYAC.cash >= bufferSum) {
+			clubPay(upgradeYAC, bufferSum);
+			upgradeYAC.youthAcademy++;
+			upgradeYAC.costYouthAcademy = getYouthAcademyMonthlyCost(upgradeYAC);
+		} else {
+			alert("zu teuer");
+		}
+		console.log("Post", upgradeYAC.youthAcademy);
+		console.log("Youth academy cost per month", upgradeYAC.costYouthAcademy);
 	}
 }
+
+function clubDowngradeYouthAcademy(downgradeYAC) {
+	if (downgradeYAC.youthAcademy > 1) {
+		downgradeYAC.youthAcademy--;
+		downgradeYAC.costYouthAcademy=getYouthAcademyMonthlyCost(downgradeYAC);
+	}
+}
+
+function youthAcademyNextMonth(nMClub) {
+	if(nMClub.cash < nMClub.costYouthAcademy) {
+		clubDowngradeYouthAcademy(nMClub);
+	}
+	clubPayInfrastructure(nMClub, nMClub.costYouthAcademy);
+}
+
+function getYouthAcademyMonthlyCost(monthlyYA) {
+	return youthAcademyMaintenance[monthlyYA.youthAcademy];
+}
+
+
+		
 
 function addJuniorKicker(aJKClub) {
 	var youngster = new kicker(-1, aJKClub.leagueLevel);
@@ -204,154 +445,44 @@ function addJuniorKicker(aJKClub) {
 
 function clubBuyTicketVendor(vendorClub) {
 	if (vendorClub.cash >= ticketVendorPrice[vendorClub.ticketVendor]) {
-		vendorClub.cash -= ticketVendorPrice[vendorClub.ticketVendor];
+		clubPay(vendorClub, ticketVendorPrice[vendorClub.ticketVendor]);
 		vendorClub.ticketVendor++;
 		vendorClub.ticketVendorRate++;
 	}
 };
 
 function clubSellTicket(ticketClub) {
-		if ((ticketClub.stadium.seatsSold + ticketClub.stadium.seatsToAssign) < ticketClub.stadium.capacity) {
-			ticketClub.stadium.seatsToAssign++;
-		}
-	};
-	
-//////////////////////////////////////////////////
-///// Stadium
-//////////////////////////////////////////////////
-
-
-
-function upgradeTerraceSeating(updateClub, upgradeTerrace) {
-		if (updateClub.stadium.terraces[upgradeTerrace] > 0) {
-			var tCost = Math.floor(1.1 * updateClub.stadium.terraces[upgradeTerrace] * EXPANDTERRACEPRICE * EXPANDTERRACECOMFORT * (updateClub.stadium.terraceComfort[upgradeTerrace]+0.5));
-			if (updateClub.cash >= tCost) {
-				updateClub.cash -= tCost;
-				updateClub.stadium.terraces[upgradeTerrace] = Math.floor(1.1*updateClub.stadium.terraces[upgradeTerrace]);
-				updateCapacity(updateClub.stadium);
-			}
-		} else {
-			if (updateClub.cash>=1000) {
-				updateClub.cash -= 1000;
-				updateClub.stadium.terraces[upgradeTerrace] = 100;
-				updateCapacity(updateClub.stadium);
-			}
-		}
-	};
-
-function getUpgradeTerraceSeatingPrice(upgradeStadium, upgradeTerrace) {
-	return Math.floor((1.1 * upgradeStadium.terraces[upgradeTerrace] * EXPANDTERRACEPRICE * EXPANDTERRACECOMFORT * (upgradeStadium.terraceComfort[upgradeTerrace]+0.5)));
-};
-
-function upgradeTerraceComfort(updateClub, upgradeTerrace) {
-	//console.log(upgradeTerrace);
-	if (updateClub.stadium.terraceComfort[upgradeTerrace] > 0) {
-		var tCost = Math.floor(1.1 * updateClub.stadium.terraces[upgradeTerrace] * EXPANDTERRACEPRICE * EXPANDTERRACECOMFORT * (updateClub.stadium.terraceComfort[upgradeTerrace]+0.5));
-		if (tCost < updateClub.cash) {
-			updateClub.cash -= tCost;
-			updateClub.stadium.terraceComfort[upgradeTerrace]++;
-		}
-	} else {
-		if (updateClub.stadium.terraces[upgradeTerrace] > 0) {
-			if (updateClub.cash>=1000) {
-				updateClub.cash -= 1000;
-				updateClub.stadium.terraceComfort[upgradeTerrace] = 1;
-			}
-		}
+	if ((ticketClub.stadium.seatsSold + ticketClub.stadium.seatsToAssign) < ticketClub.stadium.capacity) {
+		ticketClub.stadium.seatsToAssign++;
 	}
 };
 
-function clubGetUpgradeTerraceComfortPrice(updateClub, upgradeTerrace) {
-	return Math.floor((1.1 * updateClub.stadium.terraces[upgradeTerrace] * EXPANDTERRACEPRICE * EXPANDTERRACECOMFORT * (updateClub.stadium.terraceComfort[upgradeTerrace]+0.5)));
-};
-
-//////////////////////////////////////////////////
-///// Marketing
-//////////////////////////////////////////////////
-
-function getPerimeterAdvertisingMonthlyBalance(nMClub) {
-	if(nMClub.perimeterAdvertising>0) {
-		return getPerimeterAdvertisingMonthlyRevenue(nMClub) - getPerimeterAdvertisingMonthlyCost(nMClub);
-	} else {
-		return 0;
-	}
-}
-
-function getPerimeterAdvertisingMonthlyRevenue(nMClub) {
-	if(nMClub.perimeterAdvertising>0) {
-		return PERIMETERADVERTISINGREVENUEMULTIPLIER * Math.pow(PERIMETERADVERTISINGREVENUEBASE,(PERIMETERADVERTISINGEFFICIENCY*nMClub.perimeterAdvertising*nMClub.reputation));
-	} else {
-		return 0;
-	}
-}
-
-function getPerimeterAdvertisingMonthlyRevenueAfterUpgrade(nMClub) {
-	return PERIMETERADVERTISINGREVENUEMULTIPLIER * Math.pow(PERIMETERADVERTISINGREVENUEBASE,(PERIMETERADVERTISINGEFFICIENCY*(nMClub.perimeterAdvertising+1)*nMClub.reputation));
-}
-
-function getPerimeterAdvertisingMonthlyCost(nMClub) {
-	if(nMClub.perimeterAdvertising>0) {
-		return PERIMETERADVERTISINGRECOSTMULTIPLIER * Math.pow(PERIMETERADVERTISINGMONTHLYCOST, (PERIMETERADVERTISINGMONTHLYINCREMENT*nMClub.perimeterAdvertising));
-	} else {
-		return 0;
-	}
-}
-
-function getPerimeterAdvertisingMonthlyCostAferUpgrade(nMClub) {
-	return PERIMETERADVERTISINGRECOSTMULTIPLIER * Math.pow(PERIMETERADVERTISINGMONTHLYCOST, (PERIMETERADVERTISINGMONTHLYINCREMENT*(nMClub.perimeterAdvertising+1)));
-}
-
-function upgradePerimeterAdvertising(advertisingClub) {
-	var PAUpgradeCost = getPerimeterAdvertisingUpgradeCost(advertisingClub);
-	if (advertisingClub.cash >= PAUpgradeCost) {
-		advertisingClub.cash -= PAUpgradeCost;
-		advertisingClub.perimeterAdvertising++;
-		advertisingClub.perimeterAdvertisingRevenue = getPerimeterAdvertisingMonthlyRevenue(advertisingClub);
-		console.log("Einnahmen", advertisingClub.perimeterAdvertisingRevenue);
-		advertisingClub.perimeterAdvertisingMaintenance = getPerimeterAdvertisingMonthlyCost(advertisingClub);
-		console.log("Monatliche Kosten", advertisingClub.perimeterAdvertisingMaintenance);
-		
-		
-	} else {
-		alert("zu teuer");
-	}
-}
-
-
-function getPerimeterAdvertisingUpgradeCost(advertisingClub) {
-	return Math.pow(PERIMETERADVERTISINGBASECOST, (PERIMETERADVERTISINGCOSTINCREMENT*advertisingClub.perimeterAdvertising));
-}
-
-
-
-
-
-
-//////////////////////////////////////////////////
-///// Ticketing
-//////////////////////////////////////////////////
-
-
-
-
-function ticketUpdate(ticketClub) {
+function ticketGameDay(ticketClub) {
 	var bufferSum = 0;
 	if (ticketClub.stadium.seatsSold < ticketClub.stadium.capacity) {
-		ticketClub.stadium.seatsToAssign += Math.floor(Math.pow(ticketClub.ticketVendorRate,TICKETVENDOREXPONENT));
+		//
+		ticketClub.stadium.seatsToAssign += Math.floor(ticketClub.ticketDemandLeague * ticketClub.ticketVendor);
+		ticketClub.ticketsSoldSeason[ticketClub.ticketsSoldSeason.length-1] += ticketClub.stadium.seatsToAssign;
+		ticketClub.ticketsSoldMonth[ticketClub.ticketsSoldMonth.length-1] += ticketClub.stadium.seatsToAssign;
+		ticketClub.ticketsSoldYear[ticketClub.ticketsSoldYear.length-1] += ticketClub.stadium.seatsToAssign;
+		if(ticketClub.isHuman) {
+			console.log("Seats to assign: ", ticketClub.stadium.seatsToAssign);
+		}
 		if (ticketClub.stadium.capacity < (ticketClub.stadium.seatsSold + ticketClub.stadium.seatsToAssign)) {
 			ticketClub.stadium.seatsToAssign = (ticketClub.stadium.capacity-ticketClub.stadium.seatsSold);
-			console.log("verkaufte Tickets", ticketClub.stadium.seatsToAssign);
+			//console.log("verkaufte Tickets", ticketClub.stadium.seatsToAssign);
 		}
+		ticketClub.stadiumOccupationSeasonGame.push(ticketClub.stadium.seatsToAssign);
+		ticketClub.stadiumOccupationSeason[ticketClub.stadiumOccupationSeason.length-1] += ticketClub.stadium.seatsToAssign;
+		ticketClub.stadiumOccupationMonth[ticketClub.stadiumOccupationSeason.length-1] += ticketClub.stadium.seatsToAssign;
+		ticketClub.stadiumOccupationYear[ticketClub.stadiumOccupationSeason.length-1] += ticketClub.stadium.seatsToAssign;
+		
 		var sellTerrace = 0;
 		var sellAmount = 0;
 		var sellIterations = 0;
 		sellTerrace = Math.floor(Math.random()*3);
 		while (ticketClub.stadium.seatsToAssign > 0) {
 			if (sellIterations == 75) {
-				console.log("Verkaufsdurchläufe: " + sellIterations);
-				console.log("ticketClub.stadium.seatsToAssign ", ticketClub.stadium.seatsToAssign);
-				console.log("ticketClub.stadium.seatsSold", ticketClub.stadium.seatsSold);
-				console.log("Stadion:", ticketClub.stadium);
 				ticketClub.stadium.seatsToAssign = 0;
 			}
 			if (ticketClub.stadium.seatsToAssign > 1) {
@@ -373,8 +504,7 @@ function ticketUpdate(ticketClub) {
 				ticketClub.stadium.seatsToAssign -= sellAmount;
 				//console.log("Tickets verteilt: " + sellAmount, "Kapazität: " + ticketClub.stadium.terraces[sellTerrace] + " Verkaufte Tickets: " + ticketClub.stadium.seatsSold);
 				bufferSum = sellAmount * (ticketClub.stadium.terraceComfort[sellTerrace]+1)
-				ticketClub.revenueCurrentMonth += bufferSum;
-				ticketClub.cash += bufferSum;
+				clubEarnTicketing(ticketClub, bufferSum);
 			}
 
 			//console.log("Noch zu verteilen: "+ ticketClub.stadium.seatsToAssign);
@@ -388,6 +518,189 @@ function ticketUpdate(ticketClub) {
 	updateseatsToAssign(ticketClub.stadium);
 }
 
+function getLeagueDemand(ticketClub, ticketLeague) {
+	//get next Game
+	let demand = -1;
+	let homeDemand = -1;
+	let guestDemand = -1;
+	if (ticketLeague === undefined) {
+		//console.log("undefined",ticketClub.name, ticketClub.leagueLevel, ticketClub.leagueDivision);
+		ticketLeague = gameData.leagues[ticketClub.leagueLevel][ticketClub.leagueDivision];
+		//console.log("set", gameData.leagues, ticketLeague);
+	} else {
+		//console.log("defined", ticketLeague);
+	}
+	let demandGameDay = ticketLeague.currentGameDay;
+	/*
+	var repA = ticketLeague.gameDay[ticketLeague.currentGameDay][iMatch][0];
+	var repB = ticketLeague.gameDay[ticketLeague.currentGameDay][iMatch][1];
+	*/
+	while(demand == -1) {
+		for (getMatch = 0; getMatch<ticketLeague.gameDay[demandGameDay].length; getMatch++){
+			if (ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]] == ticketClub){
+				homeDemand = ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].reputation * HOMEDEMANDFACTOR;
+				if (ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].isHuman){ 
+					//console.log("homeDemand reputation: ", homeDemand);
+				}
+				homeDemand *= ((ticketLeague.clubs.length + POSITIONDEMANDSMOOTH - ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].leaguePosition)/(ticketLeague.clubs.length + POSITIONDEMANDSMOOTH)) * HOMEPOSITIONDEMANDFACTOR;
+				if (ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].isHuman){ 
+					//console.log("homeDemand after position: ", ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].leaguePosition, homeDemand);
+				}
+				guestDemand = ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][1]].reputation * GUESTDEMANDFACTOR;
+				guestDemand *= ((ticketLeague.clubs.length - ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][1]].leaguePosition + POSITIONDEMANDSMOOTH)/(ticketLeague.clubs.length + POSITIONDEMANDSMOOTH)) * GUESTPOSITIONDEMANDFACTOR;
+				demand = homeDemand + guestDemand;
+				if (ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].isHuman){
+					//
+				}
+				//GUESTREPUTATIONDEMANDFACTOR;
+			}
+		}
+		demandGameDay++;
+		if(demandGameDay == ticketLeague.gameDay.length){
+			demand = 0;
+		}
+	}
+	//console.log(demand);
+	//get table position
+	//adjust to tickets sold
+	
+	ticketClub.ticketDemandLeague = demand;
+}	
+
+
+//////////////////////////////////////////////////
+///// Stadium
+//////////////////////////////////////////////////
+
+
+
+function upgradeTerraceSeating(updateClub, upgradeTerrace) {
+		if (updateClub.stadium.terraces[upgradeTerrace] > 0) {
+			var tCost = Math.floor(1.1 * updateClub.stadium.terraces[upgradeTerrace] * EXPANDTERRACEPRICE * EXPANDTERRACECOMFORT * (updateClub.stadium.terraceComfort[upgradeTerrace]+0.5));
+			if (updateClub.cash >= tCost) {
+				clubPay(updateClub, tCost);
+				updateClub.stadium.terraces[upgradeTerrace] = Math.floor(1.1*updateClub.stadium.terraces[upgradeTerrace]);
+				updateCapacity(updateClub.stadium);
+			}
+		} else {
+			if (updateClub.cash>=ERECTTERRACE) {
+				clubPay(updateClub, ERECTTERRACE);
+				updateClub.stadium.terraces[upgradeTerrace] = TERRACEBASECAPACITIY;
+				updateCapacity(updateClub.stadium);
+			}
+		}
+	};
+
+function getUpgradeTerraceSeatingPrice(upgradeStadium, upgradeTerrace) {
+	return Math.floor((1.1 * upgradeStadium.terraces[upgradeTerrace] * EXPANDTERRACEPRICE * EXPANDTERRACECOMFORT * (upgradeStadium.terraceComfort[upgradeTerrace]+0.5)));
+};
+
+function upgradeTerraceComfort(updateClub, upgradeTerrace) {
+	//console.log(upgradeTerrace);
+	if (updateClub.stadium.terraceComfort[upgradeTerrace] > 0) {
+		var tCost = Math.floor(1.1 * updateClub.stadium.terraces[upgradeTerrace] * EXPANDTERRACEPRICE * EXPANDTERRACECOMFORT * (updateClub.stadium.terraceComfort[upgradeTerrace]+0.5));
+		if (tCost < updateClub.cash) {
+			clubPay(updateClub, tCost);
+			updateClub.stadium.terraceComfort[upgradeTerrace]++;
+		}
+	} else {
+		if (updateClub.stadium.terraces[upgradeTerrace] > 0) {
+			if (updateClub.cash>=ERECTTERRACE) {
+				clubPayInfrastructure(updateClub, ERECTTERRACE);
+				updateClub.stadium.terraceComfort[upgradeTerrace] = 1;
+			}
+		}
+	}
+};
+
+function clubGetUpgradeTerraceComfortPrice(updateClub, upgradeTerrace) {
+	return Math.floor((1.1 * updateClub.stadium.terraces[upgradeTerrace] * EXPANDTERRACEPRICE * EXPANDTERRACECOMFORT * (updateClub.stadium.terraceComfort[upgradeTerrace]+0.5)));
+};
+
+
+
+
+//////////////////////////////////////////////////
+///// Marketing
+//////////////////////////////////////////////////
+
+function getPerimeterAdvertisingMonthlyBalance(nMClub, deltaLevel) {
+	if((nMClub.perimeterAdvertising + deltaLevel)>0) {
+		if(nMClub.isHuman) {
+			//Einnahmen(Stufe;2)*POTENZ(Stufe;2,5)
+			console.log("Einnahmen: ", getPerimeterAdvertisingMonthlyRevenue(nMClub,0), " Kosten: ", getPerimeterAdvertisingMonthlyCost(nMClub,0), " Balance: ", getPerimeterAdvertisingMonthlyRevenue(nMClub,0) - getPerimeterAdvertisingMonthlyCost(nMClub,0));
+		}
+		return getPerimeterAdvertisingMonthlyRevenue(nMClub, deltaLevel) - getPerimeterAdvertisingMonthlyCost(nMClub, deltaLevel);
+	} else {
+		return 0;
+	}
+}
+
+function getPerimeterAdvertisingMonthlyRevenue(nMClub, deltaLevel) {
+	if((nMClub.perimeterAdvertising + deltaLevel)>0) {
+		if(nMClub.isHuman) {
+			//Einnahmen =POTENZ(reputation;2)*POTENZ(Stufe;2,5)*0,4
+			console.log("Reputation", nMClub.reputation, "Einnahmen", Math.pow(nMClub.reputation, PERIMETERADVERTISINGREPUTATIONEFFICIENCY)*Math.pow(nMClub.perimeterAdvertising + deltaLevel, PERIMETERADVERTISINGLEVELEXPONENT)*PERIMETERADVERTISINGREVENUEFACTOR);
+		}
+		return Math.pow(nMClub.reputation, PERIMETERADVERTISINGREPUTATIONEFFICIENCY)*Math.pow((nMClub.perimeterAdvertising + deltaLevel), PERIMETERADVERTISINGLEVELEXPONENT)*PERIMETERADVERTISINGREVENUEFACTOR;
+	} else {
+		return 0;
+	}
+}
+
+function getPerimeterAdvertisingMonthlyCost(nMClub, deltaLevel) {
+	if((nMClub.perimeterAdvertising + deltaLevel)>0) {
+		if(nMClub.isHuman) {
+			//Einnahmen =POTENZ(reputation;2)*POTENZ(Stufe;2,5)*0,4
+			console.log(Math.pow((nMClub.perimeterAdvertising + deltaLevel), PERIMETERADVERTISINGCOSTEXPONENT)*PERIMETERADVERTISINGCOSTMULTIPLIER*(nMClub.perimeterAdvertising + deltaLevel));
+		}
+		//Kosten POTENZ(Stufe;3,5)*200*Stufe =POTENZ(C$20;3,5)*200*C$20
+		return Math.pow((nMClub.perimeterAdvertising + deltaLevel), PERIMETERADVERTISINGCOSTEXPONENT)*PERIMETERADVERTISINGCOSTMULTIPLIER*(nMClub.perimeterAdvertising + deltaLevel);
+	} else {
+		return 0;
+	}
+}
+
+function perimeterAdvertisingNextMonth(nMClub) {
+	let mRevenue = nMClub.perimeterAdvertisingRevenue;
+	clubEarnMarketing(nMClub, mRevenue);
+	nMClub.marketingRevenueMonth.push(0);
+	let mCost = nMClub.perimeterAdvertisingCost;
+	clubPayMarketing(nMClub, mCost);
+	nMClub.marketingCostMonth.push(0);
+}
+
+/*
+function getPerimeterAdvertisingMonthlyRevenueAfterUpgrade(nMClub) {
+	return Math.pow(nMClub.reputation, PERIMETERADVERTISINGREPUTATIONEFFICIENCY)*Math.pow(nMClub.perimeterAdvertising+1, PERIMETERADVERTISINGLEVELEXPONENT)*PERIMETERADVERTISINGREVENUEFACTOR;
+}
+
+function getPerimeterAdvertisingMonthlyCostAferUpgrade(nMClub) {
+	return Math.pow(nMClub.reputation, PERIMETERADVERTISINGREPUTATIONEFFICIENCY)*Math.pow(nMClub.perimeterAdvertising+2, PERIMETERADVERTISINGLEVELEXPONENT);
+}
+*/
+
+
+
+function upgradePerimeterAdvertising(advertisingClub) {
+	var PAUpgradeCost = getPerimeterAdvertisingUpgradeCost(advertisingClub);
+	if (advertisingClub.cash >= PAUpgradeCost) {
+		clubInvest(advertisingClub, PAUpgradeCost);
+		advertisingClub.perimeterAdvertising++;
+		advertisingClub.perimeterAdvertisingRevenue = getPerimeterAdvertisingMonthlyRevenue(advertisingClub,0);
+		console.log("Einnahmen", advertisingClub.perimeterAdvertisingRevenue);
+		advertisingClub.perimeterAdvertisingCost = getPerimeterAdvertisingMonthlyCost(advertisingClub,0);
+		console.log("Monatliche Kosten", advertisingClub.perimeterAdvertisingCost);
+	} else {
+		alert("zu teuer");
+	}
+}
+
+
+function getPerimeterAdvertisingUpgradeCost(advertisingClub) {
+	return Math.pow(((advertisingClub.perimeterAdvertising+1) *PERIMETERADVERTISINGUPGRADECOSTEXPONENT), PERIMETERADVERTISINGUPGRADECOSTEXPONENT)*(PERIMETERADVERTISINGUPGRADECOSTMULTIPLIER*(advertisingClub.perimeterAdvertising+1));
+}
+
 
 
 
@@ -395,62 +708,612 @@ function ticketUpdate(ticketClub) {
 ///// Rendering
 //////////////////////////////////////////////////
 
+
 function renderFinanceMenu(cRenderFinanceMenu) {	
-	renderClubMenuString = cardStart50;
-		renderClubMenuString += cardHeaderStart;
-			renderClubMenuString += "Finance";
-		renderClubMenuString += divEnd;
-		renderClubMenuString += cardBodyStart;
-			renderClubMenuString += "Account balance: " + cRenderFinanceMenu.cash.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Revenue current month: " + cRenderFinanceMenu.revenueCurrentMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Revenue last month: " + cRenderFinanceMenu.revenueLastMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Cost current month: " + cRenderFinanceMenu.costCurrentMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Cost last month: " + cRenderFinanceMenu.costLastMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Balance last month: " + (cRenderFinanceMenu.revenueLastMonth - cRenderFinanceMenu.costLastMonth).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-		renderClubMenuString += divEnd;
-	renderClubMenuString += divEnd + divEnd;
+	renderClubMenuString = renderMonthlyBalanceCard(cRenderFinanceMenu);
+	renderClubMenuString += renderMonthlyRevenueCard(cRenderFinanceMenu);
+	renderClubMenuString += renderMonthlyCostCard(cRenderFinanceMenu);
 	return renderClubMenuString;
 };
+
+
+
+function renderMonthlyBalanceCard(cMonthlyBalanceCard) {
+	//Card start
+	let renderMonthlyBalanceCardString = cardStart;
+		//Card header
+		renderMonthlyBalanceCardString += cardHeaderStart;
+			renderMonthlyBalanceCardString += "<b>Finance</b>";
+		renderMonthlyBalanceCardString += divEnd;
+		//Card body
+		renderMonthlyBalanceCardString += cardBodyStart;	
+			//Table Start
+			renderMonthlyBalanceCardString += tableStart;
+				renderMonthlyBalanceCardString += tBodyStart;
+					//Tablehead
+					renderMonthlyBalanceCardString += tableHeadStart;
+						renderMonthlyBalanceCardString += tableRowStart;
+							renderMonthlyBalanceCardString += thColStart;
+								renderMonthlyBalanceCardString += "Current month";
+							renderMonthlyBalanceCardString += thEnd;
+							renderMonthlyBalanceCardString += thColStart;
+							renderMonthlyBalanceCardString += thEnd;
+							renderMonthlyBalanceCardString += thColStart;
+								renderMonthlyBalanceCardString += "Last month";
+							renderMonthlyBalanceCardString += thEnd;
+							renderMonthlyBalanceCardString += thColStart;
+							renderMonthlyBalanceCardString += thEnd;
+						renderMonthlyBalanceCardString += tableRowEnd;
+					renderMonthlyBalanceCardString += tableHeadEnd;
+					//Table body
+					renderMonthlyBalanceCardString += tableRowStart;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += "Ticket balance:";
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += cMonthlyBalanceCard.ticketRevenueMonth[cMonthlyBalanceCard.ticketRevenueMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMonthlyBalanceCardString += tableCellEnd;
+						
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += "Ticket balance:";
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart;
+						if(cMonthlyBalanceCard.ticketRevenueMonth.length>1) {
+							renderMonthlyBalanceCardString += cMonthlyBalanceCard.ticketRevenueMonth[cMonthlyBalanceCard.ticketRevenueMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						} else {
+							renderMonthlyBalanceCardString += "First month:";
+						}
+						renderMonthlyBalanceCardString += tableCellEnd;
+					renderMonthlyBalanceCardString += tableRowEnd;	
+					
+					renderMonthlyBalanceCardString += tableRowStart;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += "Squad cost:";
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += cMonthlyBalanceCard.squadCostMonth[cMonthlyBalanceCard.marketingRevenueMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMonthlyBalanceCardString += tableCellEnd;
+						
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += "Squad cost:";
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart;
+						if(cMonthlyBalanceCard.squadCostMonth.length>1) {
+							renderMonthlyBalanceCardString += cMonthlyBalanceCard.squadCostMonth[cMonthlyBalanceCard.squadCostMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						} else {
+							renderMonthlyBalanceCardString += "First month:";
+						}
+						renderMonthlyBalanceCardString += tableCellEnd;
+					renderMonthlyBalanceCardString += tableRowEnd;	
+					
+					renderMonthlyBalanceCardString += tableRowStart;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += "Marketing balance:";
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += (cMonthlyBalanceCard.marketingRevenueMonth[cMonthlyBalanceCard.marketingRevenueMonth.length-1]-cMonthlyBalanceCard.marketingCostMonth[cMonthlyBalanceCard.marketingCostMonth.length-1]).toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMonthlyBalanceCardString += tableCellEnd;
+						
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += "Marketing balance:";
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart;
+						if(cMonthlyBalanceCard.marketingRevenueMonth.length>1) {
+							renderMonthlyBalanceCardString += (cMonthlyBalanceCard.marketingRevenueMonth[cMonthlyBalanceCard.marketingRevenueMonth.length-2]-cMonthlyBalanceCard.marketingCostMonth[cMonthlyBalanceCard.marketingCostMonth.length-2]).toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						} else {
+							renderMonthlyBalanceCardString += "First month:";
+						}
+						renderMonthlyBalanceCardString += tableCellEnd;
+					renderMonthlyBalanceCardString += tableRowEnd;	
+					
+					renderMonthlyBalanceCardString += tableRowStart;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += "Revenue current month:";
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += cMonthlyBalanceCard.revenueMonth[cMonthlyBalanceCard.revenueMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMonthlyBalanceCardString += tableCellEnd;
+						
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += "Revenue last month:";
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart;
+						if(cMonthlyBalanceCard.revenueMonth.length>1) {
+							renderMonthlyBalanceCardString += cMonthlyBalanceCard.revenueMonth[cMonthlyBalanceCard.revenueMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						} else {
+							renderMonthlyBalanceCardString += "First month:";
+						}
+						renderMonthlyBalanceCardString += tableCellEnd;
+					renderMonthlyBalanceCardString += tableRowEnd;	
+					renderMonthlyBalanceCardString += tableRowStart;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += "Cost current month:";
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += cMonthlyBalanceCard.costMonth[cMonthlyBalanceCard.costMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += "Cost last month";
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart;
+							if(cMonthlyBalanceCard.costMonth.length>1) {
+								renderMonthlyBalanceCardString += cMonthlyBalanceCard.costMonth[cMonthlyBalanceCard.costMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+							renderMonthlyBalanceCardString += "First month:";
+							}
+						renderMonthlyBalanceCardString += tableCellEnd;
+					renderMonthlyBalanceCardString += tableRowEnd;	
+					renderMonthlyBalanceCardString += tableRowStart;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += "<b>Balance current month:</b>";
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart + "<b>";
+							renderMonthlyBalanceCardString += (cMonthlyBalanceCard.revenueMonth[cMonthlyBalanceCard.revenueMonth.length-1]-cMonthlyBalanceCard.costMonth[cMonthlyBalanceCard.costMonth.length-1]).toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMonthlyBalanceCardString +=  "</b>" + tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart;
+							renderMonthlyBalanceCardString += "<b>Balance last month";
+						renderMonthlyBalanceCardString += tableCellEnd;
+						renderMonthlyBalanceCardString += tableCellStart + "<b>";
+							if(cMonthlyBalanceCard.revenueMonth.length>1) {
+								renderMonthlyBalanceCardString += (cMonthlyBalanceCard.revenueMonth[cMonthlyBalanceCard.revenueMonth.length-2]-cMonthlyBalanceCard.costMonth[cMonthlyBalanceCard.costMonth.length-2]).toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+								renderMonthlyBalanceCardString += "First month";
+							}
+						renderMonthlyBalanceCardString += "</b>" + tableCellEnd;
+					renderMonthlyBalanceCardString += tableRowEnd;
+				renderMonthlyBalanceCardString += tBodyEnd
+			renderMonthlyBalanceCardString += tableEnd
+		renderMonthlyBalanceCardString += divEnd;
+	renderMonthlyBalanceCardString += divEnd
+	return renderMonthlyBalanceCardString;
+}
+
+
+
+function renderMonthlyRevenueCard(cMonthlyRevenueCard) {
+	//Card start
+	let renderMonthlyRevenueCardString = cardStart;
+		//Card header
+		renderMonthlyRevenueCardString += cardHeaderStart;
+			renderMonthlyRevenueCardString += "<b>Revenue</b>";
+		renderMonthlyRevenueCardString += divEnd;
+		//Card body
+		renderMonthlyRevenueCardString += cardBodyStart;	
+			//Table Start
+			renderMonthlyRevenueCardString += tableStart;
+				//Tablehead
+				renderMonthlyRevenueCardString += tableHeadStart;
+					renderMonthlyRevenueCardString += tableRowStart;
+						renderMonthlyRevenueCardString += thColStart;
+							renderMonthlyRevenueCardString += "Current month";
+						renderMonthlyRevenueCardString += thEnd;
+						renderMonthlyRevenueCardString += thColStart;
+						renderMonthlyRevenueCardString += thEnd;
+						renderMonthlyRevenueCardString += thColStart;
+							renderMonthlyRevenueCardString += "Last month";
+						renderMonthlyRevenueCardString += thEnd;
+						renderMonthlyRevenueCardString += thColStart;
+						renderMonthlyRevenueCardString += thEnd;
+					renderMonthlyRevenueCardString += tableRowEnd;
+				renderMonthlyRevenueCardString += tableHeadEnd;
+				//Table body
+				renderMonthlyRevenueCardString += tBodyStart;
+					
+					renderMonthlyRevenueCardString += tableRowStart;
+						renderMonthlyRevenueCardString += tableCellStart;
+							renderMonthlyRevenueCardString += "Ticket revenue current month:";
+						renderMonthlyRevenueCardString += tableCellEnd;
+						renderMonthlyRevenueCardString += tableCellStart;
+							renderMonthlyRevenueCardString += cMonthlyRevenueCard.ticketRevenueMonth[cMonthlyRevenueCard.ticketRevenueMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMonthlyRevenueCardString += tableCellEnd;
+						
+						renderMonthlyRevenueCardString += tableCellStart;
+							renderMonthlyRevenueCardString += "Ticket revenue last month:";
+						renderMonthlyRevenueCardString += tableCellEnd;
+						renderMonthlyRevenueCardString += tableCellStart;
+							if(cMonthlyRevenueCard.ticketRevenueMonth.length>1) {
+								renderMonthlyRevenueCardString += cMonthlyRevenueCard.ticketRevenueMonth[cMonthlyRevenueCard.ticketRevenueMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+								renderMonthlyRevenueCardString += "First month:";
+							}
+						renderMonthlyRevenueCardString += tableCellEnd;
+					renderMonthlyRevenueCardString += tableRowEnd;
+					
+					renderMonthlyRevenueCardString += tableRowStart;
+						renderMonthlyRevenueCardString += tableCellStart;
+							renderMonthlyRevenueCardString += "Marketing revenue current month:";
+						renderMonthlyRevenueCardString += tableCellEnd;
+						renderMonthlyRevenueCardString += tableCellStart;
+							renderMonthlyRevenueCardString += cMonthlyRevenueCard.marketingRevenueMonth[cMonthlyRevenueCard.marketingRevenueMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMonthlyRevenueCardString += tableCellEnd;
+						
+						renderMonthlyRevenueCardString += tableCellStart;
+							renderMonthlyRevenueCardString += "Marketing revenue last month:";
+						renderMonthlyRevenueCardString += tableCellEnd;
+						renderMonthlyRevenueCardString += tableCellStart;
+							if(cMonthlyRevenueCard.marketingRevenueMonth.length>1) {
+								renderMonthlyRevenueCardString += cMonthlyRevenueCard.marketingRevenueMonth[cMonthlyRevenueCard.marketingRevenueMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+								renderMonthlyRevenueCardString += "First month:";
+							}
+						renderMonthlyRevenueCardString += tableCellEnd;
+					renderMonthlyRevenueCardString += tableRowEnd;
+					
+					renderMonthlyRevenueCardString += tableRowStart;
+						renderMonthlyRevenueCardString += tableCellStart;
+							renderMonthlyRevenueCardString += "<b>Revenue current month: </b>";
+						renderMonthlyRevenueCardString += tableCellEnd;
+						renderMonthlyRevenueCardString += tableCellStart + "<b>";
+							renderMonthlyRevenueCardString += cMonthlyRevenueCard.marketingRevenueMonth[cMonthlyRevenueCard.marketingRevenueMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMonthlyRevenueCardString += "</b>" + tableCellEnd;
+						
+						renderMonthlyRevenueCardString += tableCellStart;
+							renderMonthlyRevenueCardString += "<b>Revenue last month: </b>";
+						renderMonthlyRevenueCardString += tableCellEnd;
+						renderMonthlyRevenueCardString += tableCellStart + "<b>";
+							if(cMonthlyRevenueCard.revenueMonth.length>1) {
+								renderMonthlyRevenueCardString += cMonthlyRevenueCard.revenueMonth[cMonthlyRevenueCard.revenueMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+								renderMonthlyRevenueCardString += "First month:";
+							}
+						renderMonthlyRevenueCardString += "</b>" + tableCellEnd;
+					renderMonthlyRevenueCardString += tableRowEnd;
+				renderMonthlyRevenueCardString += tBodyEnd;
+			renderMonthlyRevenueCardString += tableEnd;
+		renderMonthlyRevenueCardString += divEnd;
+	renderMonthlyRevenueCardString += divEnd
+	return renderMonthlyRevenueCardString;
+}
+
+
+
+
+function renderMonthlyCostCard(cMonthlyCostCard) {
+	//Card start
+	let renderMonthlyCostCardString = cardStart;
+		//Card header
+		renderMonthlyCostCardString += cardHeaderStart;
+			renderMonthlyCostCardString += "<b>Cost</b>";
+		renderMonthlyCostCardString += divEnd;
+		//Card body
+		renderMonthlyCostCardString += cardBodyStart;	
+			//Table Start
+			renderMonthlyCostCardString += tableStart;
+				//Tablehead
+				renderMonthlyCostCardString += tableHeadStart;
+					renderMonthlyCostCardString += tableRowStart;
+						renderMonthlyCostCardString += thColStart;
+							renderMonthlyCostCardString += "Current month";
+						renderMonthlyCostCardString += thEnd;
+						renderMonthlyCostCardString += thColStart;
+						renderMonthlyCostCardString += thEnd;
+						renderMonthlyCostCardString += thColStart;
+							renderMonthlyCostCardString += "Last month";
+						renderMonthlyCostCardString += thEnd;
+						renderMonthlyCostCardString += thColStart;
+						renderMonthlyCostCardString += thEnd;
+					renderMonthlyCostCardString += tableRowEnd;
+				renderMonthlyCostCardString += tableHeadEnd;
+				//Table body
+				renderMonthlyCostCardString += tBodyStart;
+					renderMonthlyCostCardString += tableRowStart;
+						renderMonthlyCostCardString += tableCellStart;
+							renderMonthlyCostCardString += "Marketing cost current month: <br />";
+						renderMonthlyCostCardString += tableCellEnd;
+						renderMonthlyCostCardString += tableCellStart;							
+							renderMonthlyCostCardString += cMonthlyCostCard.marketingCostMonth[cMonthlyCostCard.marketingCostMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMonthlyCostCardString += tableCellEnd;
+						renderMonthlyCostCardString += tableCellStart;
+							renderMonthlyCostCardString += "Marketing cost last month: <br />";
+						renderMonthlyCostCardString += tableCellEnd;
+						renderMonthlyCostCardString += tableCellStart;
+							if(cMonthlyCostCard.marketingCostMonth.length>1) {
+								renderMonthlyCostCardString += cMonthlyCostCard.marketingCostMonth[cMonthlyCostCard.marketingCostMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+							renderMonthlyCostCardString += "First month:";
+							}
+						renderMonthlyCostCardString += tableCellEnd;
+					renderMonthlyCostCardString += tableRowEnd;
+					
+					renderMonthlyCostCardString += tableRowStart;
+						renderMonthlyCostCardString += tableCellStart;
+							renderMonthlyCostCardString += "Squad cost current month";
+						renderMonthlyCostCardString += tableCellEnd;
+						renderMonthlyCostCardString += tableCellStart;
+							renderMonthlyCostCardString += cMonthlyCostCard.squadCostMonth[cMonthlyCostCard.squadCostMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMonthlyCostCardString += tableCellEnd;
+						renderMonthlyCostCardString += tableCellStart;
+							renderMonthlyCostCardString += "Squad cost last month";
+						renderMonthlyCostCardString += tableCellEnd;
+						renderMonthlyCostCardString += tableCellStart;
+							if(cMonthlyCostCard.squadCostMonth.length>1) {
+								renderMonthlyCostCardString += cMonthlyCostCard.squadCostMonth[cMonthlyCostCard.squadCostMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+								renderMonthlyCostCardString += "First month:";
+							}
+						renderMonthlyCostCardString += tableCellEnd;
+					renderMonthlyCostCardString += tableRowEnd;
+					
+					renderMonthlyCostCardString += tableRowStart;
+						renderMonthlyCostCardString += tableCellStart;
+							renderMonthlyCostCardString += "Infrastructure cost current month";
+						renderMonthlyCostCardString += tableCellEnd;
+						renderMonthlyCostCardString += tableCellStart;
+							renderMonthlyCostCardString += cMonthlyCostCard.infrastructureCostMonth[cMonthlyCostCard.infrastructureCostMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMonthlyCostCardString += tableCellEnd;
+						renderMonthlyCostCardString += tableCellStart;
+							renderMonthlyCostCardString += "Infrastructure cost last month";
+						renderMonthlyCostCardString += tableCellEnd;
+						renderMonthlyCostCardString += tableCellStart;
+							if(cMonthlyCostCard.infrastructureCostMonth.length>1) {
+								renderMonthlyCostCardString += cMonthlyCostCard.infrastructureCostMonth[cMonthlyCostCard.infrastructureCostMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+								renderMonthlyCostCardString += "First month:";
+							}
+						renderMonthlyCostCardString += tableCellEnd;
+					renderMonthlyCostCardString += tableRowEnd;
+					
+					renderMonthlyCostCardString += tableRowStart;
+						renderMonthlyCostCardString += tableCellStart;
+							renderMonthlyCostCardString += "<b>Cost current month</b>";
+						renderMonthlyCostCardString += tableCellEnd;
+						renderMonthlyCostCardString += tableCellStart;
+							renderMonthlyCostCardString += "<b>" + cMonthlyCostCard.costMonth[cMonthlyCostCard.costMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "</b>";
+						renderMonthlyCostCardString += tableCellEnd;
+						renderMonthlyCostCardString += tableCellStart;
+							renderMonthlyCostCardString += "<b>Cost last month: </b>";
+						renderMonthlyCostCardString += tableCellEnd;
+						renderMonthlyCostCardString += tableCellStart + "<b>";
+							if(cMonthlyCostCard.costMonth.length>1) {
+								renderMonthlyCostCardString += cMonthlyCostCard.costMonth[cMonthlyCostCard.costMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+								renderMonthlyCostCardString += "First month:";
+							}
+						renderMonthlyCostCardString += "</b>" + tableCellEnd;
+					renderMonthlyCostCardString += tableRowEnd;
+					
+				renderMonthlyCostCardString += tBodyEnd
+			renderMonthlyCostCardString += tableEnd
+		renderMonthlyCostCardString += divEnd;
+	renderMonthlyCostCardString += divEnd
+	return renderMonthlyCostCardString;
+}
+
+
+
+
 
 function renderMarketingMenu(cRenderMarketingMenu) {	
-	renderClubMenuString = renderPerimeterAdvertisingCard(cRenderMarketingMenu);
+	renderClubMenuString = renderMarketingOverviewCard(cRenderMarketingMenu);
+	renderClubMenuString += renderPerimeterAdvertisingCard(cRenderMarketingMenu);
 	return renderClubMenuString;
 };
 
-function renderPerimeterAdvertisingCard(cPerimeterAdvertising) {	
-	//current advertising
-	renderPerimeterAdvertisingCardString = cardStart50;
+
+
+function renderMarketingOverviewCard(cPerimeterAdvertising) {
+	//Card start
+	let renderMarketingOverviewCardString = "";/*cardStart;
+		//Card header
+		renderMarketingOverviewCardString += cardHeaderStart;
+			renderMarketingOverviewCardString += "<b>Cost</b>";
+		renderMarketingOverviewCardString += divEnd;
+		//Card body
+		renderMarketingOverviewCardString += cardBodyStart;	
+			//Table Start
+			renderMarketingOverviewCardString += tableStart;
+				//Tablehead
+				renderMarketingOverviewCardString += tableHeadStart;
+					renderMarketingOverviewCardString += tableRowStart;
+						renderMarketingOverviewCardString += thColStart;
+							renderMarketingOverviewCardString += "Current month";
+						renderMarketingOverviewCardString += thEnd;
+						renderMarketingOverviewCardString += thColStart;
+						renderMarketingOverviewCardString += thEnd;
+						renderMarketingOverviewCardString += thColStart;
+							renderMarketingOverviewCardString += "Last month";
+						renderMarketingOverviewCardString += thEnd;
+						renderMarketingOverviewCardString += thColStart;
+						renderMarketingOverviewCardString += thEnd;
+					renderMarketingOverviewCardString += tableRowEnd;
+				renderMarketingOverviewCardString += tableHeadEnd;
+				//Table body
+				renderMarketingOverviewCardString += tBodyStart;
+					renderMarketingOverviewCardString += tableRowStart;
+						renderMarketingOverviewCardString += tableCellStart;
+							renderMarketingOverviewCardString += "Marketing cost current month: <br />";
+						renderMarketingOverviewCardString += tableCellEnd;
+						renderMarketingOverviewCardString += tableCellStart;							
+							renderMarketingOverviewCardString += cPerimeterAdvertising.marketingCostMonth[cPerimeterAdvertising.marketingCostMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMarketingOverviewCardString += tableCellEnd;
+						renderMarketingOverviewCardString += tableCellStart;
+							renderMarketingOverviewCardString += "Marketing cost last month: <br />";
+						renderMarketingOverviewCardString += tableCellEnd;
+						renderMarketingOverviewCardString += tableCellStart;
+							if(cPerimeterAdvertising.marketingCostMonth.length>1) {
+								renderMarketingOverviewCardString += cPerimeterAdvertising.marketingCostMonth[cPerimeterAdvertising.marketingCostMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+							renderMarketingOverviewCardString += "First month:";
+							}
+						renderMarketingOverviewCardString += tableCellEnd;
+					renderMarketingOverviewCardString += tableRowEnd;
+					
+					renderMarketingOverviewCardString += tableRowStart;
+						renderMarketingOverviewCardString += tableCellStart;
+							renderMarketingOverviewCardString += "Squad cost current month";
+						renderMarketingOverviewCardString += tableCellEnd;
+						renderMarketingOverviewCardString += tableCellStart;
+							renderMarketingOverviewCardString += cPerimeterAdvertising.squadCostMonth[cPerimeterAdvertising.squadCostMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMarketingOverviewCardString += tableCellEnd;
+						renderMarketingOverviewCardString += tableCellStart;
+							renderMarketingOverviewCardString += "Squad cost last month";
+						renderMarketingOverviewCardString += tableCellEnd;
+						renderMarketingOverviewCardString += tableCellStart;
+							if(cPerimeterAdvertising.squadCostMonth.length>1) {
+								renderMarketingOverviewCardString += cPerimeterAdvertising.squadCostMonth[cPerimeterAdvertising.squadCostMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+								renderMarketingOverviewCardString += "First month:";
+							}
+						renderMarketingOverviewCardString += tableCellEnd;
+					renderMarketingOverviewCardString += tableRowEnd;
+					
+					renderMarketingOverviewCardString += tableRowStart;
+						renderMarketingOverviewCardString += tableCellStart;
+							renderMarketingOverviewCardString += "Infrastructure cost current month";
+						renderMarketingOverviewCardString += tableCellEnd;
+						renderMarketingOverviewCardString += tableCellStart;
+							renderMarketingOverviewCardString += cPerimeterAdvertising.infrastructureCostMonth[cPerimeterAdvertising.infrastructureCostMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderMarketingOverviewCardString += tableCellEnd;
+						renderMarketingOverviewCardString += tableCellStart;
+							renderMarketingOverviewCardString += "Infrastructure cost last month";
+						renderMarketingOverviewCardString += tableCellEnd;
+						renderMarketingOverviewCardString += tableCellStart;
+							if(cPerimeterAdvertising.infrastructureCostMonth.length>1) {
+								renderMarketingOverviewCardString += cPerimeterAdvertising.infrastructureCostMonth[cPerimeterAdvertising.infrastructureCostMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+								renderMarketingOverviewCardString += "First month:";
+							}
+						renderMarketingOverviewCardString += tableCellEnd;
+					renderMarketingOverviewCardString += tableRowEnd;
+					
+					renderMarketingOverviewCardString += tableRowStart;
+						renderMarketingOverviewCardString += tableCellStart;
+							renderMarketingOverviewCardString += "<b>Cost current month</b>";
+						renderMarketingOverviewCardString += tableCellEnd;
+						renderMarketingOverviewCardString += tableCellStart;
+							renderMarketingOverviewCardString += "<b>" + cPerimeterAdvertising.costMonth[cPerimeterAdvertising.costMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "</b>";
+						renderMarketingOverviewCardString += tableCellEnd;
+						renderMarketingOverviewCardString += tableCellStart;
+							renderMarketingOverviewCardString += "<b>Cost last month: </b>";
+						renderMarketingOverviewCardString += tableCellEnd;
+						renderMarketingOverviewCardString += tableCellStart + "<b>";
+							if(cPerimeterAdvertising.costMonth.length>1) {
+								renderMarketingOverviewCardString += cPerimeterAdvertising.costMonth[cPerimeterAdvertising.costMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+								renderMarketingOverviewCardString += "First month:";
+							}
+						renderMarketingOverviewCardString += "</b>" + tableCellEnd;
+					renderMarketingOverviewCardString += tableRowEnd;
+					
+				renderMarketingOverviewCardString += tBodyEnd
+			renderMarketingOverviewCardString += tableEnd
+		renderMarketingOverviewCardString += divEnd;
+	renderMarketingOverviewCardString += divEnd;
+	*/
+	return renderMarketingOverviewCardString;
+}
+
+
+
+
+
+function renderPerimeterAdvertisingCard(cPerimeterAdvertising) {
+	//Card start
+	let renderPerimeterAdvertisingCardString = cardStart;
+		//Card header
 		renderPerimeterAdvertisingCardString += cardHeaderStart;
-			renderPerimeterAdvertisingCardString += "Perimeter advertising";
+			renderPerimeterAdvertisingCardString += "<b>Perimeter advertising</b>";
 		renderPerimeterAdvertisingCardString += divEnd;
-		renderPerimeterAdvertisingCardString += cardBodyStart;
-			//Math.pow(PERIMETERADVERTISINGREVENUEBASE,(PERIMETERADVERTISINGEFFICIENCY*cPerimeterAdvertising.perimeterAdvertising*cPerimeterAdvertising.reputation));
-			renderPerimeterAdvertisingCardString += "Current advertising: " + perimeterAdvertisingString[cPerimeterAdvertising.perimeterAdvertising] + "<br />";
-			renderPerimeterAdvertisingCardString += "Monthly revenue: " + getPerimeterAdvertisingMonthlyRevenue(cPerimeterAdvertising).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderPerimeterAdvertisingCardString += "Monthly cost: " + getPerimeterAdvertisingMonthlyCost(cPerimeterAdvertising).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderPerimeterAdvertisingCardString += "Balance: " + getPerimeterAdvertisingMonthlyBalance(cPerimeterAdvertising).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";		
+		//Card body
+		renderPerimeterAdvertisingCardString += cardBodyStart;	
+			//Table Start
+			renderPerimeterAdvertisingCardString += tableStart;
+				//Tablehead
+				/*
+				renderPerimeterAdvertisingCardString += tableHeadStart;
+					renderPerimeterAdvertisingCardString += tableRowStart;
+						renderPerimeterAdvertisingCardString += thColStart;
+							renderPerimeterAdvertisingCardString += "";//"Current month";
+						renderPerimeterAdvertisingCardString += thEnd;
+						renderPerimeterAdvertisingCardString += thColStart;
+						renderPerimeterAdvertisingCardString += thEnd;
+						renderPerimeterAdvertisingCardString += thColStart;
+							renderPerimeterAdvertisingCardString += ""; //"Last month";
+						renderPerimeterAdvertisingCardString += thEnd;
+						renderPerimeterAdvertisingCardString += thColStart;
+						renderPerimeterAdvertisingCardString += thEnd;
+					renderPerimeterAdvertisingCardString += tableRowEnd;
+				renderPerimeterAdvertisingCardString += tableHeadEnd;
+				*/
+				//Table body
+				renderPerimeterAdvertisingCardString += tBodyStart;
+					renderPerimeterAdvertisingCardString += tableRowStart;
+						renderPerimeterAdvertisingCardString += tableCellStart;
+							renderPerimeterAdvertisingCardString += "Current advertising";
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+						renderPerimeterAdvertisingCardString += tableCellStart;							
+							renderPerimeterAdvertisingCardString += perimeterAdvertisingString[cPerimeterAdvertising.perimeterAdvertising];
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+						renderPerimeterAdvertisingCardString += tableCellStart;
+							renderPerimeterAdvertisingCardString += "Monthly balance";
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+						renderPerimeterAdvertisingCardString += tableCellStart;
+							renderPerimeterAdvertisingCardString += getPerimeterAdvertisingMonthlyBalance(cPerimeterAdvertising, 0).toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+					renderPerimeterAdvertisingCardString += tableRowEnd;
+					
+					renderPerimeterAdvertisingCardString += tableRowStart;
+						renderPerimeterAdvertisingCardString += tableCellStart;
+							renderPerimeterAdvertisingCardString += "Upgrade advertising to";
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+						renderPerimeterAdvertisingCardString += tableCellStart;							
+							renderPerimeterAdvertisingCardString += perimeterAdvertisingString[cPerimeterAdvertising.perimeterAdvertising+1];
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+						renderPerimeterAdvertisingCardString += tableCellStart;
+							renderPerimeterAdvertisingCardString += "Balance after Upgrade";
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+						renderPerimeterAdvertisingCardString += tableCellStart;
+							renderPerimeterAdvertisingCardString += getPerimeterAdvertisingMonthlyBalance(cPerimeterAdvertising, 1).toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+					renderPerimeterAdvertisingCardString += tableRowEnd;
+					
+					renderPerimeterAdvertisingCardString += tableRowStart;
+						renderPerimeterAdvertisingCardString += tableCellStart;
+							renderPerimeterAdvertisingCardString += "Upgrade Price";
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+						renderPerimeterAdvertisingCardString += tableCellStart;							
+							renderPerimeterAdvertisingCardString += getPerimeterAdvertisingUpgradeCost(cPerimeterAdvertising).toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+						renderPerimeterAdvertisingCardString += tableCellStart;
+							if (cPerimeterAdvertising.cash >= getPerimeterAdvertisingUpgradeCost(cPerimeterAdvertising)) {
+								if(getPerimeterAdvertisingMonthlyBalance(cPerimeterAdvertising, 1)<getPerimeterAdvertisingMonthlyBalance(cPerimeterAdvertising, 0)) {
+									renderPerimeterAdvertisingCardString += "<button class=\"btn btn-danger\" onmouseup=\"mUp(this)\" id=\"upgradePerimeterAdvertising\">Upgrade</button>";
+								} else {
+									renderPerimeterAdvertisingCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"upgradePerimeterAdvertising\">Upgrade</button>";
+								}
+							} else {
+								renderPerimeterAdvertisingCardString += "<button class=\"btn btn-primary\" disabled>Upgrade</button>";
+							}
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+					renderPerimeterAdvertisingCardString += tableRowEnd;
+					
+					renderPerimeterAdvertisingCardString += tableRowStart;
+						renderPerimeterAdvertisingCardString += tableCellStart;
+							renderPerimeterAdvertisingCardString += "Balance after downgrade";
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+						renderPerimeterAdvertisingCardString += tableCellStart;							
+							renderPerimeterAdvertisingCardString += getPerimeterAdvertisingMonthlyBalance(cPerimeterAdvertising, -1).toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+						renderPerimeterAdvertisingCardString += tableCellStart;
+							if (cPerimeterAdvertising.perimeterAdvertising >0) {
+								if(getPerimeterAdvertisingMonthlyBalance(cPerimeterAdvertising, -1)<getPerimeterAdvertisingMonthlyBalance(cPerimeterAdvertising, 0)) {
+									renderPerimeterAdvertisingCardString += "<button class=\"btn btn-danger\" onmouseup=\"mUp(this)\" id=\"downgradePerimeterAdvertising\">Downgrade</button>";
+								} else {
+									renderPerimeterAdvertisingCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"downgradePerimeterAdvertising\">Downgrade</button>";
+								}
+							} else {
+								renderPerimeterAdvertisingCardString += "<button class=\"btn btn-primary\" disabled>Downgrade</button>";
+							}
+						renderPerimeterAdvertisingCardString += tableCellEnd;
+					renderPerimeterAdvertisingCardString += tableRowEnd;
+					
+				renderPerimeterAdvertisingCardString += tBodyEnd
+			renderPerimeterAdvertisingCardString += tableEnd
 		renderPerimeterAdvertisingCardString += divEnd;
-	renderPerimeterAdvertisingCardString += divEnd + divEnd;
-	//upgrade advertising
-	renderPerimeterAdvertisingCardString += cardStart50;
-		renderPerimeterAdvertisingCardString += cardHeaderStart;
-			renderPerimeterAdvertisingCardString += "Upgrade perimeter advertising";
-		renderPerimeterAdvertisingCardString += divEnd;
-		renderPerimeterAdvertisingCardString += cardBodyStart;
-			//Math.pow(PERIMETERADVERTISINGREVENUEBASE,(PERIMETERADVERTISINGEFFICIENCY*cPerimeterAdvertising.perimeterAdvertising*cPerimeterAdvertising.reputation));
-			renderPerimeterAdvertisingCardString += "Improve advertising to: " + perimeterAdvertisingString[cPerimeterAdvertising.perimeterAdvertising+1] + "<br />";
-			renderPerimeterAdvertisingCardString += "Upgrade cost: " + getPerimeterAdvertisingUpgradeCost(cPerimeterAdvertising).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderPerimeterAdvertisingCardString += "Expected monthly revenue after upgrade: " + getPerimeterAdvertisingMonthlyRevenueAfterUpgrade(cPerimeterAdvertising).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderPerimeterAdvertisingCardString += "Monthly cost after upgrade: " + getPerimeterAdvertisingMonthlyCostAferUpgrade(cPerimeterAdvertising).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			if (cPerimeterAdvertising.cash >= getPerimeterAdvertisingUpgradeCost(cPerimeterAdvertising)) {
-				renderPerimeterAdvertisingCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"upgradePerimeterAdvertising\">Upgrade</button>";
-			} else {
-				renderPerimeterAdvertisingCardString += "<button class=\"btn btn-primary\" disabled>Upgrade</button>";
-			}			
-		renderPerimeterAdvertisingCardString += divEnd;
-	renderPerimeterAdvertisingCardString += divEnd + divEnd;
+	renderPerimeterAdvertisingCardString += divEnd
 	return renderPerimeterAdvertisingCardString;
-};
+}
+
 
 function renderStaffMenu(renderClub) {
 	renderClubMenuString = br + renderCoachCard(renderClub);
@@ -458,31 +1321,126 @@ function renderStaffMenu(renderClub) {
 	return renderClubMenuString;
 }
 
-function renderCoachCard(renderClub) {
-	renderCoachCardString = cardStart50;
+
+
+
+function renderCoachCard(cCoachCard) {
+	//Card start
+	let renderCoachCardString = cardStart;
+		//Card header
 		renderCoachCardString += cardHeaderStart;
-			renderCoachCardString += "<h3>Coach</h3>";
+			renderCoachCardString += "<b>Head Coach</b>";
 		renderCoachCardString += divEnd;
-		renderCoachCardString += cardBodyStart;
-			renderCoachCardString += "Upgrade Cost: " + coachPrice[renderClub.coach].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			if (renderClub.cash >= coachPrice[renderClub.coach]) {
-				renderCoachCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"upgradeCoach\">"+coachString[renderClub.coach+1]+"</button>";
-			} else {
-				renderCoachCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" disabled>"+coachString[renderClub.coach+1]+"</button>";
-			}			
+		//Card body
+		renderCoachCardString += cardBodyStart;	
+			//Table Start
+			renderCoachCardString += tableStart;
+				//Tablehead
+				/*
+				renderCoachCardString += tableHeadStart;
+					renderCoachCardString += tableRowStart;
+						renderCoachCardString += thColStart;
+							renderCoachCardString += "Current month";
+						renderCoachCardString += thEnd;
+						renderCoachCardString += thColStart;
+						renderCoachCardString += thEnd;
+						renderCoachCardString += thColStart;
+							renderCoachCardString += "Last month";
+						renderCoachCardString += thEnd;
+						renderCoachCardString += thColStart;
+						renderCoachCardString += thEnd;
+					renderCoachCardString += tableRowEnd;
+				renderCoachCardString += tableHeadEnd;
+				*/
+				//Table body
+				renderCoachCardString += tBodyStart;
+					/*
+					renderCoachCardString += "Current Coach: " + coachString[cCoachCard.coach] + "<br />";
+					renderCoachCardString += "Current salary: " + coachSalary[cCoachCard.coach] + "<br />";
+					renderCoachCardString += "Upgrade Cost: " + coachPrice[cCoachCard.coach].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+					renderCoachCardString += "Salary after upgrade: " + coachSalary[cCoachCard.coach+1] + "<br />";
+					if (cCoachCard.cash >= coachPrice[cCoachCard.coach]) {
+						renderCoachCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"upgradeCoach\">"+coachString[cCoachCard.coach+1]+"</button>";
+					} else {
+						renderCoachCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" disabled>"+coachString[cCoachCard.coach+1]+"</button>";
+					}	
+					*/
+					renderCoachCardString += tableRowStart;
+						renderCoachCardString += tableCellStart;
+							renderCoachCardString += "<b>Current Coach: </b>";
+						renderCoachCardString += tableCellEnd;
+						renderCoachCardString += tableCellStart + "<b>";
+							renderCoachCardString += coachString[cCoachCard.coach];
+						renderCoachCardString += "</b>" + tableCellEnd;
+						renderCoachCardString += tableCellStart;
+							renderCoachCardString += "<b>Current salary: ";
+						renderCoachCardString += "</b>" + tableCellEnd;
+						renderCoachCardString += tableCellStart + "<b>";
+							renderCoachCardString += coachSalary[cCoachCard.coach].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderCoachCardString += "</b>" + tableCellEnd;
+					renderCoachCardString += tableRowEnd;					
+					renderCoachCardString += tableRowStart;
+						renderCoachCardString += tableCellStart;
+							renderCoachCardString += "Coach after upgrade";
+						renderCoachCardString += tableCellEnd;
+						renderCoachCardString += tableCellStart;
+							renderCoachCardString += coachString[cCoachCard.coach+1];
+						renderCoachCardString += tableCellEnd;
+						renderCoachCardString += tableCellStart;
+							renderCoachCardString += "Salary after upgrade: ";
+						renderCoachCardString += tableCellEnd;
+						renderCoachCardString += tableCellStart;
+							renderCoachCardString += coachSalary[cCoachCard.coach+1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderCoachCardString += tableCellEnd;
+						renderCoachCardString += tableCellStart;
+						if (cCoachCard.cash >= coachPrice[cCoachCard.coach]) {
+							renderCoachCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"upgradeCoach\">"+coachPrice[cCoachCard.coach].toLocaleString('de-DE', {style:'currency', currency:'EUR'})+"</button>";
+						} else {
+							renderCoachCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" disabled>"+coachPrice[cCoachCard.coach].toLocaleString('de-DE', {style:'currency', currency:'EUR'})+"</button>";
+						}	
+						renderCoachCardString += tableCellEnd;
+					renderCoachCardString += tableRowEnd;
+					renderCoachCardString += tableRowStart;
+						renderCoachCardString += tableCellStart;
+							renderCoachCardString += "Downgrade youth academy";
+						renderCoachCardString += tableCellEnd;
+						renderCoachCardString += tableCellStart;
+							renderCoachCardString += "Monthly cost after downgrade: ";
+						renderCoachCardString += tableCellEnd;
+						renderCoachCardString += tableCellStart;
+							if (cCoachCard.coach > 0) {
+								renderCoachCardString += coachPrice[cCoachCard.coach-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+								renderCoachCardString += coachPrice[0].toLocaleString('de-DE', {style:'currency', currency:'EUR'});;
+							}	
+						renderCoachCardString += tableCellEnd;
+						renderCoachCardString += tableCellStart;
+							if (cCoachCard.coach > 0) {
+								renderCoachCardString += "<button class=\"btn btn-danger\" onmouseup=\"mUp(this)\" id=\"downgradeCoach\">Downgrade</button>";
+							} else {
+								renderCoachCardString += "<button class=\"btn btn-danger\" onmouseup=\"mUp(this)\" disabled>Downgrade</button>";
+							}	
+						renderCoachCardString += tableCellEnd;
+					renderCoachCardString += tableRowEnd;
+				renderCoachCardString += tBodyEnd;
+			renderCoachCardString += tableEnd;
 		renderCoachCardString += divEnd;
-	renderCoachCardString += divEnd + divEnd;
+	renderCoachCardString += divEnd
 	return renderCoachCardString;
 }
 
+
+
+
+/*
 function renderYouthAcademyCard(renderClub) {
 	renderYouthAcademyCardString = cardStart50;
 		renderYouthAcademyCardString += cardHeaderStart;
 			renderYouthAcademyCardString += "Youth Academy";
 		renderYouthAcademyCardString += divEnd;
 		renderYouthAcademyCardString += cardBodyStart;
-			renderYouthAcademyCardString += "Upgrade Cost: " + Math.floor(youthAcademyPrice[renderClub.youthAcademy]).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			if (renderClub.cash >= coachPrice[renderClub.coach]) {
+			renderYouthAcademyCardString += "Upgrade Cost: " + youthAcademyPrice[renderClub.youthAcademy].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			if (renderClub.cash >= youthAcademyPrice[renderClub.youthAcademy]) {
 				renderYouthAcademyCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"upgradeYouthAcademy\">"+youthAcademyString[renderClub.youthAcademy+1]+"</button>";
 			} else {
 				renderYouthAcademyCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" disabled>"+youthAcademyString[renderClub.youthAcademy+1]+"</button>";
@@ -491,6 +1449,86 @@ function renderYouthAcademyCard(renderClub) {
 	renderYouthAcademyCardString += divEnd + divEnd;
 	return renderYouthAcademyCardString;
 };
+*/
+
+function renderYouthAcademyCard(cYAcademyCard) {
+	//Card start
+	let renderYouthAcademyCardString = cardStart;
+		//Card header
+		renderYouthAcademyCardString += cardHeaderStart;
+			renderYouthAcademyCardString += "<b>Youth academy</b>";
+		renderYouthAcademyCardString += divEnd;
+		//Card body
+		renderYouthAcademyCardString += cardBodyStart;	
+			//Table Start
+			renderYouthAcademyCardString += tableStart;
+				//Tablehead
+				//Table body
+				renderYouthAcademyCardString += tBodyStart;
+					renderYouthAcademyCardString += tableRowStart;
+						renderYouthAcademyCardString += tableCellStart;
+							renderYouthAcademyCardString += "<b>Current youth academy: </b>";
+						renderYouthAcademyCardString += tableCellEnd;
+						renderYouthAcademyCardString += tableCellStart + "<b>";
+							renderYouthAcademyCardString += youthAcademyString[cYAcademyCard.youthAcademy];
+						renderYouthAcademyCardString += "</b>" + tableCellEnd;
+						renderYouthAcademyCardString += tableCellStart;
+							renderYouthAcademyCardString += "<b>Current monthly cost: ";
+						renderYouthAcademyCardString += "</b>" + tableCellEnd;
+						renderYouthAcademyCardString += tableCellStart + "<b>";
+							renderYouthAcademyCardString += youthAcademyMaintenance[cYAcademyCard.youthAcademy].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderYouthAcademyCardString += "</b>" + tableCellEnd;
+					renderYouthAcademyCardString += tableRowEnd;					
+					renderYouthAcademyCardString += tableRowStart;
+						renderYouthAcademyCardString += tableCellStart;
+							renderYouthAcademyCardString += "Youth academy after upgrade";
+						renderYouthAcademyCardString += tableCellEnd;
+						renderYouthAcademyCardString += tableCellStart;
+							renderYouthAcademyCardString += youthAcademyString[cYAcademyCard.youthAcademy+1];
+						renderYouthAcademyCardString += tableCellEnd;
+						renderYouthAcademyCardString += tableCellStart;
+							renderYouthAcademyCardString += "Monthly cost after upgrade: ";
+						renderYouthAcademyCardString += tableCellEnd;
+						renderYouthAcademyCardString += tableCellStart;
+							renderYouthAcademyCardString += youthAcademyMaintenance[cYAcademyCard.youthAcademy+1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+						renderYouthAcademyCardString += tableCellEnd;
+						renderYouthAcademyCardString += tableCellStart;
+						if (cYAcademyCard.cash >= youthAcademyPrice[cYAcademyCard.youthAcademy+1]) {
+							renderYouthAcademyCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"upgradeYouthAcademy\">" + youthAcademyPrice[cYAcademyCard.youthAcademy+1].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "</button>";
+						} else {
+							renderYouthAcademyCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" disabled>Downgrade youth academy</button>";
+						}	
+						renderYouthAcademyCardString += tableCellEnd;
+					renderYouthAcademyCardString += tableRowEnd;
+					renderYouthAcademyCardString += tableRowStart;
+						renderYouthAcademyCardString += tableCellStart;
+							renderYouthAcademyCardString += "Downgrade youth academy";
+						renderYouthAcademyCardString += tableCellEnd;
+						renderYouthAcademyCardString += tableCellStart;
+							renderYouthAcademyCardString += "Monthly cost after downgrade: ";
+						renderYouthAcademyCardString += tableCellEnd;
+						renderYouthAcademyCardString += tableCellStart;
+							if (cYAcademyCard.youthAcademy > 0) {
+								renderYouthAcademyCardString += youthAcademyMaintenance[cYAcademyCard.youthAcademy-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'});
+							} else {
+								renderYouthAcademyCardString += youthAcademyMaintenance[0].toLocaleString('de-DE', {style:'currency', currency:'EUR'});;
+							}	
+						renderYouthAcademyCardString += tableCellEnd;
+						renderYouthAcademyCardString += tableCellStart;
+							if (cYAcademyCard.youthAcademy > 0) {
+								renderYouthAcademyCardString += "<button class=\"btn btn-danger\" onmouseup=\"mUp(this)\" id=\"downgradeYouthAcademy\">Downgrade</button>";
+							} else {
+								renderYouthAcademyCardString += "<button class=\"btn btn-danger\" onmouseup=\"mUp(this)\" disabled>Downgrade</button>";
+							}	
+						renderYouthAcademyCardString += tableCellEnd;
+					renderYouthAcademyCardString += tableRowEnd;
+				renderYouthAcademyCardString += tBodyEnd;
+			renderYouthAcademyCardString += tableEnd;
+		renderYouthAcademyCardString += divEnd;
+	renderYouthAcademyCardString += divEnd
+	return renderYouthAcademyCardString;
+}
+
 
 function setStadiumMenu (cStadium) {
 	renderClubMenuString = cardStart50;
@@ -499,7 +1537,11 @@ function setStadiumMenu (cStadium) {
 		renderClubMenuString += divEnd;
 		renderClubMenuString += cardBodyStart;
 			renderClubMenuString += "Capacity "+ cStadium.stadium.capacity + "<br />";
-			renderClubMenuString += "Ticket sold: " + cStadium.stadium.seatsSold + "<br />";
+			if (cStadium.stadiumOccupationSeasonGame.length>0) {
+				renderClubMenuString += "Ticket sold last match: " + cStadium.stadiumOccupationSeasonGame[cStadium.stadiumOccupationSeasonGame.length-1] + "<br />";
+			} else {
+				renderClubMenuString += "Ticket sold last match: First match<br />";
+			}
 			renderClubMenuString += "<div class=\"progress\">";
 			renderClubMenuString += "<div class=\"progress-bar"
 			if ((cStadium.stadium.seatsSold/cStadium.stadium.capacity)>0.75) {
@@ -509,7 +1551,7 @@ function setStadiumMenu (cStadium) {
 					renderClubMenuString += " bg-warning";
 				}
 			}
-			renderClubMenuString += "\" role=\"progressbar\" style=\"width:" + cStadium.stadium.seatsSold/cStadium.stadium.capacity*100 + "%\" aria-valuenow=\""+ cStadium.stadium.seatsSold + "\" aria-valuemin=\"0\" aria-valuemax=\"" + cStadium.stadium.capacity + "\"></div>";
+			renderClubMenuString += "\" role=\"progressbar\" style=\"width:" + cStadium.stadiumOccupationSeasonGame[cStadium.stadiumOccupationSeasonGame.length-1]/cStadium.stadium.capacity*100 + "%\" aria-valuenow=\""+ cStadium.stadium.seatsSold + "\" aria-valuemin=\"0\" aria-valuemax=\"" + cStadium.stadium.capacity + "\"></div>";
 			renderClubMenuString += divEnd;
 		renderClubMenuString += divEnd;
 	renderClubMenuString += divEnd + divEnd;
@@ -568,11 +1610,19 @@ function renderStatisticsMenu(cRenderFinanceMenu) {
 		renderClubMenuString += divEnd;
 		renderClubMenuString += cardBodyStart;
 			renderClubMenuString += "Account balance: " + cRenderFinanceMenu.cash.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Revenue current month: " + cRenderFinanceMenu.revenueCurrentMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Revenue last month: " + cRenderFinanceMenu.revenueLastMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Cost current month: " + cRenderFinanceMenu.costCurrentMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Cost last month: " + cRenderFinanceMenu.costLastMonth.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			renderClubMenuString += "Balance last month: " + (cRenderFinanceMenu.revenueLastMonth - cRenderFinanceMenu.costLastMonth).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			renderClubMenuString += "Revenue current month: " + cRenderFinanceMenu.revenueMonth[eClub.revenueMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			if(cRenderFinanceMenu.costMonth.length<2) {
+				renderClubMenuString += "Revenue last month: First month<br />";
+			} else {
+				renderClubMenuString += "Revenue last month: " + cRenderFinanceMenu.revenueMonth[eClub.revenueMonth.length-2].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			}
+			renderClubMenuString += "Cost current month: " + cRenderFinanceMenu.costMonth[cRenderFinanceMenu.costMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			renderClubMenuString += "Cost last month: " + cRenderFinanceMenu.costMonth[cRenderFinanceMenu.costMonth.length-1].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			if(cRenderFinanceMenu.costMonth.length<2) {
+				renderClubMenuString += "Balance last month:  First month<br />";
+			} else {
+				renderClubMenuString += "Balance last month: " + (cRenderFinanceMenu.revenueMonth[cRenderFinanceMenu.costMonth.length-2] - cRenderFinanceMenu.costMonth[cRenderFinanceMenu.costMonth.length-2]).toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
+			}
 		renderClubMenuString += divEnd;
 	renderClubMenuString += divEnd + divEnd;
 	return renderClubMenuString;
@@ -602,7 +1652,7 @@ function setClubMenu() {
 
 
 perimeterAdvertisingString = [
-	"No perimeter advertising",
+	"No advertising",
 	"Posters on the wall",
 	"Banner on the fence",
 	"One Advertising board",
@@ -621,38 +1671,76 @@ perimeterAdvertisingString = [
 
 
 coachString = [
-	"" ,
-	"Selber coachen",
-	"Trainer-Lehrbuch lesen",
-	"Übungen auf YouTube kucken",
-	"Trainerlehrgang machen",
-	"Trainerschein machen",
-	"Trainer vom Nachbarclub abwerben",
-	"Trainer fortbilden",
-	"Trainerschein bezahlen",
-	"Trainer aus der höheren Liga abwerben",
-	"Trainerlizenz bezahlen",
-	"Techniktrainer",
-	"Taktiktrainer",
-	"Physiotherapeut",
-	"Athletik-Trainer",
-	"C-Lizenz",
-	"B-Lizenz",
-	"A-Lizenz"
+	"None" ,
+	"Coach yourself",
+	"Read a book on coaching",
+	"Learn about coaching on YouTube",
+	"Hire coach",
+	"Coaching workshop",
+	"Athletics coaching",
+	"Tactics coaching",
+	"Coaching license basic",
+	"Attacking coaching",
+	"Defense coaching",
+	"Coaching license D",
+	"Positioning coaching",
+	"Pressing coaching",
+	"Coaching license C",
+	"Psychology coaching",
+	"Pressing coaching",
+	"Coaching license B",
+	"Coaching license A",
+	"Fluid positioning coaching",
+	"Coaching license Elite",
+	"Fully Upgraded"
 ];
 
 coachPrice = [
 	0,
-	250,
-	1000,
-	5000,
+	100,
+	2500,
 	10000,
-	30000,
-	75000,
-	125000,
-	180000,
+	25000,
+	60000,
+	120000,
 	250000,
-	500000
+	500000,
+	1000000,
+	2000000,
+	4000000,
+	8000000,
+	16000000,
+	32000000,
+	64000000,
+	128000000,
+	256000000,
+	512000000,
+	1024000000,
+	2048000000
+];
+
+var coachSalary = [
+	0,
+	25,
+	75,
+	125,
+	200,
+	600,
+	1000,
+	2000,
+	4000,
+	6500,
+	9000,
+	12500,
+	17500,
+	25000,
+	35000,
+	50000,
+	75000,
+	115000,
+	150000,
+	175000,
+	250000
 ];
 
 shirtSponsorString = [
@@ -690,29 +1778,74 @@ shirtSponsorReward = [
 ];
 
 youthAcademyString = [
-	"",
-	"Auf der Wiese kicken",
-	"Kinderteam gründen",
-	"Jugendteam gründen",	
-	"Jugendtrainer einstellen",
-	"Jugend-Techniktrainer",
-	"Schulbetreuung",
-	"Jugend-Taktiktrainer",
-	"Jugend-Athletik-Trainer",
-	"Jugend-Physio",
-	"Jugendinternat"
+	"none",
+	"Allow some kids to play",
+	"Organize a kids team",
+	"Take part in kiddie leagues",	
+	"Organize a coach for the kids",
+	"Organize a coach for each team",
+	"Youth coaching schedule",
+	"Tactical youth coaching",
+	"Youth athletics coach",
+	"Youth physical therapy",
+	"School support",
+	"Summer camp",
+	"Individual training schedules",
+	"Youth training facility",
+	"Youth academy",
+	"Boarding school",
+	"Youth analytics program",
+	"Advanced academy",
+	"National youth team center",
+	"National youth team headquarters",
+	"National youth olympics facility",
+	"Fully Upgraded"
 ];
 
-youthAcademyPrice = [
+var youthAcademyPrice = [
 	0,
-	250,
-	1000,
-	5000,
+	100,
+	2500,
 	10000,
-	30000,
-	75000,
-	125000,
-	180000,
+	25000,
+	60000,
+	120000,
 	250000,
-	500000
+	500000,
+	1000000,
+	2000000,
+	4000000,
+	8000000,
+	16000000,
+	32000000,
+	64000000,
+	128000000,
+	256000000,
+	512000000,
+	1024000000,
+	2048000000
+];
+
+var youthAcademyMaintenance = [
+	0,
+	25,
+	75,
+	125,
+	200,
+	600,
+	1000,
+	2000,
+	4000,
+	6500,
+	9000,
+	12500,
+	17500,
+	25000,
+	35000,
+	50000,
+	75000,
+	115000,
+	150000,
+	175000,
+	250000
 ];

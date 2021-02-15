@@ -14,7 +14,8 @@ var gameData = {
 	currentLeagueDivision: 0,
 	displayLeagueLevel: 0,
 	displayLeagueDivision: 0,
-	lastFrame: -1
+	lastFrame: -1,
+	gameDate: new Date(1963, 07, 1, 15)
 }
 
 
@@ -37,7 +38,7 @@ var productionRate = 0;
 var productionModifier = 0;
 var lastGameDay = 0;
 var nextGameDay = 0;
-gameData.gameDate = new Date(1963, 07, 1, 15);
+//gameData.gameDate = new Date(1963, 07, 1, 15);
 
 
 

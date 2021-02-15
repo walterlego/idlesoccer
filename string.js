@@ -50,10 +50,13 @@ var cardBodyStart = "<div class=\"card-body\">";
 
 var listGroupStart = "<ul class=\"list-group\">";
 var listGroupItem = "<li class=\"list-group-item\">";
+var listGroupFlushStart = "<ul class=\"list-group list-group-flush\">";
 var listGroupItemPrimary = "<li class=\"list-group-item ist-group-item-primary\">";
 var listGroupItemSecondary = "<li class=\"list-group-item list-group-item-secondary\">";
 var listItemEnd = "</li>";
 var listGroupEnd = "</ul>";
+
+
 
 //Dropdown
 
@@ -77,22 +80,12 @@ function setDrowpdownMenu(idString) {
 function setDropdownItemID(dropdownItemValue, dropdownItemLabel, dropDownID) {
 	return "<div class=\"dropdown-item\" id=\"" + dropDownID + "\" title=\"" + dropdownItemValue + "\" onmouseup=\"mUp(this)\" >" + dropdownItemLabel + "</div>";
 }
-/*
-function setDropdownItemDataset(dropdownItemValue, dropdownItemLabel, dropDownID) {
-	return "<div class=\"dropdown-item\" id=\"" + dropDownID + "\" data-selectedLeagueLevel=\"" + dropdownItemValue + "\" onmouseup=\"mUp(this)\" >" + dropdownItemLabel + "</div>";
-}
-*/
-/*
-id="electric-cars"
-	data-columns="3"
-	data-index-number="12314"
-	data-parent="cars">
-*/
 
 
 
 //Bootstrap Table
 
+var tableStart = "<table class=\"table \">";
 var tableStripedStart = "<table class=\"table table-striped\">";
 var tableEnd = "</table>";
 var tableHeadStart = "<thead>";
