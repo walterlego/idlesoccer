@@ -57,6 +57,11 @@ It's mostly missing balancing and missing features.
 
 ## To Dos ##
 
+### General ###
+
+Saving
+Restarting
+
 ### club ###
 Naming clubs after quarters, not the whole town for lower league clubs. (Only done for Cologne and Berlin)
 Shirt sponsor
