@@ -1,4 +1,4 @@
-CityData = [
+cityData = [
 ["Dresden",512829,1067],
 ["Radebeul",33224,1445],
 ["Radeberg",22281,1454],

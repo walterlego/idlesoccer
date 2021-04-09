@@ -1,10 +1,26 @@
 //library
 
 //game start
-function setUp() {	
-	gameData.loop = window.setInterval(updateFrame, FRAMERATE);
-	gameData.dateLoop = window.setInterval(nextDay, GAMEDAY);
+function setUp() {
+	client.gui = CHOOSEMANAGERNAME;
+	document.getElementById("headLine").innerHTML = printStatusLine();
+	document.getElementById("game").innerHTML = renderChooseManagerName();
 	
+}
+	
+	
+//set up leagues and start game
+function startGame() {	
+	console.log("startGame");
+	//gameData.loop = window.setInterval(updateFrame, FRAMERATE);
+	console.log("Setup");
+	gameData.player = new player();
+	if(initLeagues()){
+		gameData.dateLoop = window.setInterval(nextDay, GAMEDAY);
+		gameData.loop = window.setInterval(updateFrame, FRAMERATE);
+		gameData.startUpTime = new Date().getTime();
+		gameData.lastCircle = gameData.startUpTime;
+	}
 	///////////////////////
 	// Pause code
 	///////////////////////
@@ -16,8 +32,7 @@ function setUp() {
 			gameData.dateLoop = null;
 		}
 	*/
-	gameData.startUpTime = new Date().getTime();
-	gameData.lastCircle = gameData.startUpTime;
+
 	/*
 	var savegame = JSON.parse(localStorage.getItem("idleSoccerSave"))
 	if (savegame !== null) {
@@ -26,13 +41,14 @@ function setUp() {
 		gameData = savegame;
 		loadGame();
 	} else {
-		*/
+		
 		console.log("Setup");
 		gameData.player = new player();
-		initleagues();
-		/*
+		initLeagues();
+		
 	}
 	*/
+	client.gui = STADIUM;
 	document.getElementById("navBarClubName").innerHTML = gameData.player.club.name;
 };
 
@@ -102,13 +118,27 @@ function nextYear() {
 	}
 }
 
+//////////////////////////////////////////
+////   UPDATE FRAME
+//////////////////////////////////////////
+
 function updateFrame() {
 	//gameData.currentCircle = new Date();
 	//gameData.frameTime = gameData.currentCircle-gameData.lastCircle;
 	gui = "";
 	document.getElementById("headLine").innerHTML = printStatusLine();
 	if (gameData.lastFrame != client.gui) {	// Screen is rendered for the first time
-		if (client.gui == CLUB) {
+		//console.log("new frame");
+		if (client.gui == CHOOSEMANAGERNAME){
+			//sortTeam();
+			gui += renderChooseManagerName();
+		} else if (client.gui == CHOOSECITY) {
+		//Build html of game
+			gui += "";//renderClubMenu(gameData.player.club);
+		} else if (client.gui == CHOOSECLUBNAME) {
+		//Build html of game
+			gui += "";//renderClubMenu(gameData.player.club);
+		} else if (client.gui == CLUB) {
 		//Build html of game
 			gui += "";//renderClubMenu(gameData.player.club);
 		} else if (client.gui == TEAM){
@@ -142,20 +172,16 @@ function updateFrame() {
 		gameData.lastFrame = client.gui;
 		document.getElementById("game").innerHTML = gui;
 	} else {		// Screen only needs refreshing
-		if (client.gui == CLUB) {
-			gui += "";//renderClubMenu(gameData.player.club);
-		} else if (client.gui == TEAM){
-			//sortTeam();
-			gui += renderTeamFormation(gameData.player.club.team);
-			document.getElementById("game").innerHTML = gui;
+		//console.log("refresh");
+		if (client.gui == TEAM){
+			refreshTeamFormation(gameData.player.club.team);
 		} else if (client.gui == STADIUM){
 			gui += setStadiumMenu(gameData.player.club);
 			document.getElementById("game").innerHTML = gui;
 		} else if (client.gui == SINGLEKICKER){
 			//gui += gameData.player.club.setSingleKickerMenu();
 		} else if (client.gui == FORMATION){
-			gui += renderTeamFormation(gameData.player.club.team);
-			document.getElementById("game").innerHTML = gui;
+			refreshTeamFormation(gameData.player.club.team);
 		} else if (client.gui == TEAMTRAINING){
 			gui += renderTeamTraining(gameData.player.club);
 			document.getElementById("game").innerHTML = gui;
@@ -180,7 +206,9 @@ function updateFrame() {
 		} else if (client.gui == LEAGUEVIEW){
 			refreshLeagueViewMenu();
 		} else if (client.gui == GAMEDAYS){
-			gui += refreshGameDayMenu();
+			gui += renderPrintGameDayMenu();
+			//gui += refreshGameDayMenu();
+			document.getElementById("game").innerHTML = gui;
 		}
 	}
 };
@@ -192,7 +220,7 @@ function updateFrame() {
 //////////////////////////////////////////
 
 function mUp(obj) {
-	//console.log("mUP: ", obj);
+	console.log("mUP: ", obj.value);
 	if (obj.id == "pauseGame"){
 		pauseGame();
 	} else if (obj.id == "sellTicket"){
@@ -211,6 +239,12 @@ function mUp(obj) {
 				toggleKickerPosition(gameData.player.club.team, gameData.player.club.team.players[i]);
 			}
 		}
+	} else if (obj.id == "chooseFormation"){
+		console.log("setTeamFormation", obj.title);
+		gameData.player.club.team.chosenFormation = obj.title;
+		gameData.player.club.team.formation = obj.title;
+		setTeamFormation(gameData.player.club.team);
+		document.getElementById("teamPickFormation").innerHTML = renderTeamFormationPickFormation(gameData.player.club.team);
 	} else if (obj.id == "hireTicketVendor"){
 		clubBuyTicketVendor(gameData.player.club);
 	} else if (obj.id == "switchToFormation"){
@@ -240,6 +274,7 @@ function mUp(obj) {
 	} else if (obj.id == "switchToFinance"){
 		client.gui = FINANCE;
 	} else if (obj.id == "switchToMarketing"){
+		console.log("reputation: ", gameData.player.club.reputation);
 		client.gui = MARKETING;
 	} else if (obj.id == "upgradePerimeterAdvertising"){
 		upgradePerimeterAdvertising(gameData.player.club);
@@ -279,8 +314,78 @@ function mUp(obj) {
 		gameData.displayLeagueDivision = gameData.player.club.leagueDivision;
 		//document.getElementById("game").innerHTML = renderLeagueViewMenu();
 	} else if (obj.id == "switchToGameDays"){
-		client.gui = GAMEDAYS;
+		client.gui = GAMEDAYS;	
+	} else if (obj.id == "switchToEnterManagerName"){
+		document.getElementById("game").innerHTML = renderChooseManagerName();
+	} else if (obj.id == "managerNameInputButton"){
+		initGetManagerName();
+		document.getElementById("game").innerHTML = renderChooseManagerName();
+	} else if (obj.id == "randomNameButton"){
+		initGetRandomManagerName();
+		document.getElementById("game").innerHTML = renderChooseManagerName();
+	} else if (obj.id == "confirmManagerNameButton"){
+		if(initSubmitManagerName() == true) {
+			document.getElementById("game").innerHTML = renderGetCityName();
+		}		
+	} else if (obj.id == "cityNameInputButton"){
+		initGetCityName();
+		document.getElementById("game").innerHTML = renderGetCityName();
+	} else if (obj.id == "chooseClubPrefix"){
+		gameData.clubPrefix=clubPrefix[obj.title];
+		console.log(gameData.clubPrefix);
+		document.getElementById("game").innerHTML = renderGetClubName();
+	} else if (obj.id == "chooseClubName"){
+		gameData.clubName=clubMiddle[obj.title];
+		console.log(gameData.clubName);
+		document.getElementById("game").innerHTML = renderGetClubName();
+	} else if (obj.id == "chooseClubCity"){
+		gameData.clubTown=cityData[obj.title][0];
+		console.log(gameData.clubTown);
+		document.getElementById("game").innerHTML = renderGetCityName();
+	} else if (obj.id == "randomCityButton"){
+		let cityCandidate = Math.floor(Math.random()*cityData.length);
+		gameData.clubTown = cityData[cityCandidate][0] + " ";
+		gameData.clubZipCode = cityData[cityCandidate][2];
+		console.log(gameData.clubTown);
+		document.getElementById("game").innerHTML = renderGetCityName();
+	}else if (obj.id == "confirmCityButton"){
+		if(initSubmitCity() == true) {
+			document.getElementById("game").innerHTML = renderGetClubName();
+		}		
+	} else if (obj.id == "generateRandomClubNameButton"){
+		generateRandomClubName();
+		document.getElementById("game").innerHTML = renderGetClubName();
+	} else if (obj.id == "zipCodeInputButton"){
+		initGetZipCode();
+		document.getElementById("game").innerHTML = renderGetCityName();
+	} else if (obj.id == "acceptClubNumberButton"){
+		initGetClubNumber();
+		document.getElementById("game").innerHTML = renderGetClubName();
+	} else if (obj.id == "acceptClubNameButton"){
+		document.getElementById("game").innerHTML = initGetDifficulty();
+		//startGame();
+	} else if (obj.id == "chooseInitLeagueLevel"){
+		gameData.initLeagueLevel=obj.title;
+		if(gameData.initLeagueDivision>gameData.leagueStructure[gameData.initLeagueLevel][0]) {
+			gameData.initLeagueDivision=0;
+		}
+		console.log(leagueNames[obj.title]);
+		document.getElementById("game").innerHTML = initGetDifficulty();
+	} else if (obj.id == "chooseInitLeagueDivision"){
+		gameData.initLeagueDivision=obj.title;
+		console.log("Division " + (obj.title+1));
+		document.getElementById("game").innerHTML = initGetDifficulty();
+	} else if (obj.id == "renderInitDifficulty"){
+		document.getElementById("game").innerHTML = initGetDifficulty();
+	} else if (obj.id == "chooseInitDifficulty"){
+		gameData.difficulty=obj.title;
+		console.log("difficulty " + difficultyStrings[obj.title]);
+		document.getElementById("game").innerHTML = initGetDifficulty();
+	} else if (obj.id == "acceptDifficulty"){
+		document.getElementById("game").innerHTML = confirmInit();
 	}
+	
+	
 	updateFrame();
 }
 
@@ -349,7 +454,22 @@ function loadGame() {
 
 function printStatusLine() {
 	var statusLineString = listGroupStart + listGroupItem;
-	statusLineString += strong + gameData.player.club.name + strongEnd + leagueNames[gameData.player.club.leagueLevel] + " " + gameData.player.club.leagueDivision + " " + "Kontostand: " + gameData.player.club.cash.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + " " + printGameDate();
+	if (client.gui < GUISTATE){
+		let testPlayerName = true;
+		if(gameData.playerFirstName == -1){
+			testPlayerName = false;
+		}
+		if(gameData.playerLastName == -1){
+			testPlayerName = false;
+		}
+		if(testPlayerName) {
+			statusLineString += strong + "Welcome " + gameData.playerFirstName + " " + gameData.playerLastName + "!" + strongEnd;
+		} else {
+			statusLineString += strong + "Welcome " + strongEnd;
+		}
+	} else {
+		statusLineString += strong + gameData.player.club.name + strongEnd + leagueNames[gameData.player.club.leagueLevel] + " " + (gameData.player.club.leagueDivision+1) + " " + "Kontostand: " + gameData.player.club.cash.toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + " " + printGameDate();
+	}
 	statusLineString += listItemEnd + listGroupEnd;
 	return statusLineString;
 }
@@ -371,3 +491,211 @@ function shuffle(array) {
 }
 
 
+function renderGameInit() {
+	//Card start
+	let initHTMLString = cardStart;
+		//Card header
+		initHTMLString += cardHeaderStart;
+			initHTMLString += "<b>Choose your club name</b>";
+		initHTMLString += divEnd;
+		//Card body
+		initHTMLString += cardBodyStart;	
+			//Table Start
+			initHTMLString += tableStart;
+				//Tablehead
+				//Table body
+				initHTMLString += "Let's find a name and a home town for your club!<br /><br />";
+				initHTMLString += tBodyStart;
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += dropdownStart
+							initHTMLString += "Will it be an 1. FC or a VfB?<br />";
+							if (gameData.clubPrefix == -1) {
+								initHTMLString += setDropdownButton("chooseClubPrefix", "Choose prefix");
+							} else {
+								initHTMLString += setDropdownButton("chooseClubPrefix", gameData.clubPrefix);
+							}
+							initHTMLString += setDrowpdownMenu("chooseClubPrefix");
+							for (lL=0; lL < clubPrefix.length; lL++) {
+								initHTMLString += setDropdownItemID(lL, clubPrefix[lL].toString(), "chooseClubPrefix");
+							}
+						initHTMLString += divEnd;
+						initHTMLString += tableCellEnd;
+						initHTMLString += tableCellStart;
+						initHTMLString += dropdownStart
+							initHTMLString += "Add a Fortuna or a Maccabi. This one is optional.<br />";
+							if (gameData.clubName == -1) {
+								initHTMLString += setDropdownButton("chooseClubName", "Choose club name");
+							} else {
+								initHTMLString += setDropdownButton("chooseClubName", gameData.clubName);
+							}							
+							initHTMLString += setDrowpdownMenu("chooseClubName");
+							for (lL=0; lL < clubMiddle.length; lL++) {
+								initHTMLString += setDropdownItemID(lL, clubMiddle[lL].toString(), "chooseClubName");
+							}
+						initHTMLString += divEnd;
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;			
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += "The zip code is needed to find your regional league.<br />";
+						initHTMLString += "<form><div class=\"form-group\"><input type=\"number\" placeholder=\"enter PLZ\" id=\"zipCodeInput\" class=\"form-control\"></div>"
+								+"<input type=\"button\" value=\"Confirm ZIP code\" onmouseup=\"mUp(this)\"  id=\"zipCodeInputButton\" class=\"btn btn-primary\"></form>";
+						initHTMLString += tableCellEnd;
+						initHTMLString += tableCellStart;
+						initHTMLString += "What's the name of the city?<br />";
+						initHTMLString += "<form><div class=\"form-group\"><input type=\"text\" placeholder=\"Type city name...\" id=\"cityNameInput\" class=\"form-control\"></div>"
+								+"<input type=\"button\" value=\"Confirm city\" onmouseup=\"mUp(this)\"  id=\"cityNameInputButton\" class=\"btn btn-primary\"></form>";
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += "Maybe add a founding year?<br />";
+						initHTMLString += "<form><div class=\"form-group\"><input id=\"clubNumberInput\" type=\"text\" placeholder=\"04\" id=\"clubNumberInput\" class=\"form-control\"></div>"
+								+"<input type=\"button\" value=\"Confirm club number\" onmouseup=\"mUp(this)\"  id=\"acceptClubNumberButton\" class=\"btn btn-primary\"></form>";
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += "You can also enter a whole new name<br />";
+						initHTMLString += "<form><div class=\"form-group\"><input id=\"cityNameplaceholder\" type=\"text\" placeholder=\"Enter club name\" id=\"cityNameInput\" class=\"form-control\"></div>"
+								+"<input type=\"button\" value=\"Confirm club name\" onmouseup=\"mUp(this)\"  id=\"acceptClubNameButton\" class=\"btn btn-primary\"></form>";
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;	
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += "Or generate a random name name<br />";
+						initHTMLString += "<strong>" + gameData.clubPrefix + " ";
+						if (gameData.clubName != -1) {
+							initHTMLString += gameData.clubName + " ";
+						}
+						initHTMLString += gameData.clubTown;
+						if (gameData.clubNumber != -1) {
+							initHTMLString += " " + gameData.clubNumber;
+						}
+						initHTMLString += "</strong><br />";
+						initHTMLString += "<input type=\"button\" value=\"Generate random name\" onmouseup=\"mUp(this)\"  id=\"generateRandomClubNameButton\" class=\"btn btn-primary\">";
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;	
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += "Do you want to continue with this name?<br />";
+						initHTMLString += "<strong>" + gameData.clubPrefix + " ";
+						if (gameData.clubName != -1) {
+							initHTMLString += gameData.clubName + " ";
+						}
+						initHTMLString += gameData.clubTown;
+						if (gameData.clubNumber != -1) {
+							initHTMLString += " " + gameData.clubNumber;
+						}
+						initHTMLString += "</strong><br />";
+						initHTMLString += "<input type=\"button\" value=\"Confirm club name\" onmouseup=\"mUp(this)\"  id=\"acceptClubNameButton\" class=\"btn btn-primary\">";
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;					
+
+				initHTMLString += tBodyEnd;
+			initHTMLString += tableEnd;
+				
+		initHTMLString += divEnd;
+	initHTMLString += divEnd;
+	return initHTMLString;
+}
+
+
+function initGetDifficulty() {
+	//Card start
+	let initHTMLString = cardStart;
+		//Card header
+		initHTMLString += cardHeaderStart;
+			initHTMLString += "<b>Please configure your starting scenario</b>";
+		initHTMLString += divEnd;
+		//Card body
+		initHTMLString += cardBodyStart;	
+			//Table Start
+			initHTMLString += tableStart;
+				//Tablehead
+				//Table body
+				initHTMLString += "What league do you want to start in?<br /><br />";
+				initHTMLString += tBodyStart;
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += dropdownStart
+							initHTMLString += "What league level do you want to start in?<br />";
+							initHTMLString += setDropdownButton("chooseInitLeagueLevel", leagueNames[gameData.initLeagueLevel]);
+							initHTMLString += setDrowpdownMenu("chooseInitLeagueLevel");
+							for (lL=0; lL < leagueNames.length; lL++) {
+								initHTMLString += setDropdownItemID(lL, leagueNames[lL], "chooseInitLeagueLevel");
+							}
+						initHTMLString += divEnd;
+						initHTMLString += tableCellEnd;
+						initHTMLString += tableCellStart;
+						initHTMLString += dropdownStart
+						initHTMLString += "If you start below league 3, choose a division.<br />";
+						let initD = parseInt(gameData.initLeagueDivision)+1;
+						initHTMLString += setDropdownButton("chooseInitLeagueDivision", ("Start in division " + initD));
+							initHTMLString += setDrowpdownMenu("chooseInitLeagueDivision");
+							for (leagueDivisions=0; leagueDivisions<gameData.leagueStructure[gameData.initLeagueLevel][0]; leagueDivisions++) {
+								initHTMLString += setDropdownItemID(leagueDivisions, (leagueDivisions+1).toString(), "chooseInitLeagueDivision");
+							}
+						initHTMLString += divEnd;
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;			
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += "Please select difficulty<br />";
+						initHTMLString += setDropdownButton("chooseInitDifficulty", difficultyStrings[gameData.difficulty]);
+							initHTMLString += setDrowpdownMenu("chooseInitDifficulty");
+							for (difficulty=0; difficulty<difficultyStrings.length; difficulty++) {
+								initHTMLString += setDropdownItemID(difficulty, difficultyStrings[difficulty], "chooseInitDifficulty");
+							}
+						initHTMLString += divEnd;
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += "<input type=\"button\" value=\"Continue\" onmouseup=\"mUp(this)\" id=\"acceptDifficulty\" class=\"btn btn-primary\"></form>";
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;
+				initHTMLString += tBodyEnd;
+			initHTMLString += tableEnd;
+				
+		initHTMLString += divEnd;
+	initHTMLString += divEnd;
+	return initHTMLString;
+}
+
+function confirmInit() {
+	//Card start
+	let initHTMLString = cardStart;
+		//Card header
+		initHTMLString += cardHeaderStart;
+			initHTMLString += "<b>Please review your settings</b>";
+		initHTMLString += divEnd;
+		//Card body
+		initHTMLString += cardBodyStart;	
+			initHTMLString += "Your name is " + gameData.playerFirstName + " " + gameData.playerLastName + ".<br />";
+			initHTMLString += "<input type=\"button\" value=\"Change name\" onmouseup=\"mUp(this)\" id=\"switchToEnterManagerName\" class=\"btn btn-primary\"><br /><br />";
+			initHTMLString += "Your club is located in " + gameData.clubZipCode + " " + gameData.clubTown + ".<br />";
+			initHTMLString += "<input type=\"button\" value=\"Change city\" onmouseup=\"mUp(this)\" id=\"confirmManagerNameButton\" class=\"btn btn-primary\"><br /><br />";
+			initHTMLString += "Your club is named " + gameData.clubPrefix + " ";
+			if (gameData.clubName != -1) {
+				initHTMLString += gameData.clubName + " ";
+			}
+			initHTMLString += gameData.clubTown;
+			if (gameData.clubNumber != -1) {
+				initHTMLString += " " + gameData.clubNumber;
+			}
+			initHTMLString += "<br />";
+			initHTMLString += "<input type=\"button\" value=\"Change club name\" onmouseup=\"mUp(this)\"  id=\"confirmCityButton\" class=\"btn btn-primary\"><br /><br />";
+			initHTMLString += "Your club starts in " + leagueNames[gameData.initLeagueLevel] + " " + parseInt(gameData.initLeagueDivision)+1 + ".<br />";
+			initHTMLString += "<input type=\"button\" value=\"Change league\" onmouseup=\"mUp(this)\"  id=\"acceptClubNameButton\" class=\"btn btn-primary\"><br /><br />";
+			initHTMLString += "Your difficulty level is " +  difficultyStrings[gameData.difficulty] + ".<br />";
+			initHTMLString += "<input type=\"button\" value=\"Change difficulty\" onmouseup=\"mUp(this)\"  id=\"renderInitDifficulty\" class=\"btn btn-primary\"><br /><br />";
+			initHTMLString += "Are you ready?<br />";
+			initHTMLString += "<input type=\"button\" value=\"Start game\" onmouseup=\"startGame()\"  class=\"btn btn-primary\"><br />";				
+		initHTMLString += divEnd;
+	initHTMLString += divEnd;
+	return initHTMLString;
+}
+
+confirmInit

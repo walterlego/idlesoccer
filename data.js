@@ -4,8 +4,19 @@ var buffer = 0;
 
 //GameData
 var gameData = {
-	gameState: INIT,
+	gameState: CHOOSEMANAGERNAME,
+	gui: CHOOSEMANAGERNAME,
 	playerId: 0,
+	playerFirstName: -1,
+	playerLastName: -1,
+	clubPrefix: -1,
+	clubZipCode: -1,
+	clubName: -1,
+	clubTown: -1,
+	clubNumber: -1,
+	initLeagueLevel: 9,
+	initLeagueDivision: 0,
+	difficulty:0,
 	newTeamId: 0,
 	loop: 0,
 	leagues: [],
@@ -15,7 +26,8 @@ var gameData = {
 	displayLeagueLevel: 0,
 	displayLeagueDivision: 0,
 	lastFrame: -1,
-	gameDate: new Date(1963, 07, 1, 15)
+	gameDate: new Date(1963, 07, 1, 15),
+	isTest: false
 }
 
 
@@ -65,4 +77,4 @@ gameData.leagueStructure = [
 	[64,2,4],			//Bezirksliga
 	[128,2,4],			//Kreisliga A
 	[256,2,0]			//Kreisliga B
-]
+];

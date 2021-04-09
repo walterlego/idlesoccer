@@ -1,9 +1,33 @@
-var stadium = function() {
-	this.capacity = 100;
+var stadium = function(leagueLevel) {
+	
 	this.seatsSold = 0;
 	this.terraceOccupation = [0, 0, 0, 0];
-	this.terraces = [ 100, 0, 0, 0];
-	this.terraceComfort = [0, 0, 0, 0];
+	//STADIUMBASE
+	//STADIUMEXPONENT
+	if(leagueLevel==9) {
+		this.terraces = [ 100, 0, 0, 0];
+	} else if(leagueLevel==8) {
+		this.terraces = [ 100, 0, 100, 0];
+	} else if(leagueLevel==7) {	
+		this.terraces = [ 250, 0, 100, 0];
+	} else if(leagueLevel==6) {	
+		this.terraces = [ 250, 100, 250, 100];
+	} else if(leagueLevel==5) {	
+		this.terraces = [ 1000, 500, 750, 250];
+	} else if(leagueLevel==4) {	
+		this.terraces = [ 1500, 500, 1000, 250];
+	} else if(leagueLevel==3) {	
+		this.terraces = [ 2000, 750, 1500, 500];
+	} else if(leagueLevel==2) {	
+		this.terraces = [ 4000, 1250, 2500, 1000];
+	} else if(leagueLevel==1) {	
+		this.terraces = [ 7500, 2500, 5000, 2500];
+	}else if(leagueLevel==0) {	
+		this.terraces = [ 9000, 3500, 7500, 4000];
+	}
+	updateCapacity(this);
+ 	this.terraceComfort = [gameData.leagueStructure.length - leagueLevel, gameData.leagueStructure.length - leagueLevel, gameData.leagueStructure.length - leagueLevel, gameData.leagueStructure.length - leagueLevel];
+	//gameData.leagueStructure.length
 	this.seatsToAssign = 0;
 	this.logOccupation = [];
 	this.averageOccupation = 0;

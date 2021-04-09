@@ -1,43 +1,87 @@
 var club = function(isHuman, leagueLevel, leagueDivision) {
 	//console.log("Erstelle Club", isHuman, leagueLevel, leagueDivision);
-	this.isHuman = isHuman;
-	this.leagueLevel = leagueLevel;
-	this.leagueDivision = leagueDivision;
-	this.reputation = ((gameData.leagueStructure.length-this.leagueLevel)*REPUTATIONLEAGUEFACTOR) + (Math.random()*REPUTATIONPLACEMENTFACTOR*18);
-	//console.log("Liga: ", this.leagueLevel, this.reputation);
-	this.mood = 0;
-	//name
-	this.name = clubPrefix[Math.floor(Math.random()*clubPrefix.length)] + " ";
-	if(Math.random()>0.7){
-		this.name += clubMiddle[Math.floor(Math.random()*clubMiddle.length)] + " ";
-	};
-	let cityFound = false;
-	let cityCandidate = 0;
-	//console.log("cityCandidate");
-	while(cityFound == false) {
-		cityCandidate = Math.floor(Math.random()*CityData.length);
-		if (CityData[cityCandidate][1]>(288255/(this.leagueLevel+1))) {
-			cityFound = true;
-		}
-	}
-	//console.log("city found");
-	this.name += CityData[cityCandidate][0] + " ";
-	if(Math.random()>0.8){
-		this.name += "0" + (Math.floor(Math.random()*9)+1);
-	};	
+	this.isHuman = isHuman;	
 	/////////////////////////////////////////////
 	///////////////Finances
 	/////////////////////////////////////////////
-	this.cash = Math.floor(Math.pow(2,(gameData.leagueStructure.length-this.leagueLevel))*STARTCASH);
-	
+	this.cash = Math.floor(Math.pow(2,(gameData.leagueStructure.length-leagueLevel))*STARTCASH);
+	this.mood = 0;
+	//name
+	if(isHuman) {
+		this.leagueLevel = gameData.initLeagueLevel;
+		this.leagueDivision = gameData.initLeagueDivision;
+		this.cash *= Math.pow((difficultyStrings.length - gameData.difficulty), STARTCASHPOW);
+		console.log("Cash: ", this.cash, gameData.difficulty);
+		if (gameData.clubPrefix!=-1) {
+			this.name = gameData.clubPrefix;
+		}
+		if (gameData.clubName!=-1) {
+			if (this.name === undefined) {
+				this.name = gameData.clubName;
+			} else {
+				this.name += " " + gameData.clubName;
+			}
+		}
+		if (gameData.clubTown!=-1) {
+			this.name += " " + gameData.clubTown;
+		}
+		if (gameData.clubNumber!=-1) {
+			this.name += " " + gameData.clubNumber.toString();
+		}
+		if (gameData.zipCode!=-1) {
+			this.zipCode = gameData.zipCode;
+		} else {
+			this.zipCode += Math.floor(Math.random()*99999);
+		}
+	} else {
+		this.leagueLevel = leagueLevel;
+		this.leagueDivision = leagueDivision;
+		this.name = clubPrefix[Math.floor(Math.random()*clubPrefix.length)] + " ";
+		if(Math.random()>0.7){
+			this.name += clubMiddle[Math.floor(Math.random()*clubMiddle.length)] + " ";
+		}
+		let cityFound = false;
+		let cityCandidate = 0;
+		//console.log("cityCandidate");
+		while(cityFound == false) {
+			cityCandidate = Math.floor(Math.random()*cityData.length);
+			if (cityData[cityCandidate][1]>(288255/(this.leagueLevel+1))) {
+				cityFound = true;
+			}
+		}
+		//console.log("city found");
+		this.name += cityData[cityCandidate][0] + " ";
+		this.zipCode = cityData[cityCandidate][2];
+		if(Math.random()>0.8){
+			this.name += "0" + (Math.floor(Math.random()*9)+1);
+		};
+	}
+	this.reputation = ((gameData.leagueStructure.length-this.leagueLevel)*REPUTATIONLEAGUEFACTOR) + (Math.random()*REPUTATIONPLACEMENTFACTOR*18);
+
 	
 	////Staff
 	
 	////Marketing
 	
 	//Perimeter Advertising
-	this.perimeterAdvertising = gameData.leagueStructure.length-(this.leagueLevel+1);
+	this.perimeterAdvertising = gameData.leagueStructure.length-leagueLevel-1;
 	this.perimeterAdvertisingBalance = getPerimeterAdvertisingMonthlyBalance(this,0);
+	let optimizationBalance = this.perimeterAdvertisingBalance;
+	let optimizationValue = 0;
+	let optimizedLevel = this.perimeterAdvertising;
+	//console.log("Pre: ", this.perimeterAdvertising, this.perimeterAdvertisingBalance);
+	let optimizedBalance = this.perimeterAdvertisingBalance;
+	while(this.perimeterAdvertising + optimizationValue > 0) {
+		optimizationBalance = getPerimeterAdvertisingMonthlyBalance(this, optimizationValue);
+		if(optimizationBalance > optimizedBalance) {
+			optimizedLevel = this.perimeterAdvertising + optimizationValue;
+			optimizedBalance = optimizationBalance;
+		}
+		optimizationValue--;
+	}
+	this.perimeterAdvertising = optimizedLevel;
+	this.perimeterAdvertisingBalance = getPerimeterAdvertisingMonthlyBalance(this,0);
+	//console.log("Post: ", optimizedLevel, this.perimeterAdvertisingBalance);
 	this.perimeterAdvertisingRevenue = getPerimeterAdvertisingMonthlyRevenue(this,0);
 	this.perimeterAdvertisingCost = getPerimeterAdvertisingMonthlyCost(this,0);
 
@@ -60,11 +104,11 @@ var club = function(isHuman, leagueLevel, leagueDivision) {
 	///////////////Infrastructure
 	/////////////////////////////////////////////
 	//stadium
-	this.stadium = new stadium();
+	this.stadium = new stadium(this.leagueLevel);
 	
 	//Ticketing
-	this.ticketVendor = 0; 
-	this.ticketVendorRate = 0;
+	this.ticketVendor = gameData.leagueStructure.length-leagueLevel-1; 
+	//this.ticketVendorRate = 0;
 	this.ticketDemandLeague = -1;
 	this.seasontickets = 0;
 	this.stadiumOccupationSeasonGame = [];
@@ -134,6 +178,54 @@ var club = function(isHuman, leagueLevel, leagueDivision) {
 
 	//return this;
 };
+
+
+function initGetCityName() {
+	gameData.clubTown = document.getElementById("cityNameInput").value;
+	console.log("gameData.clubTown", gameData.clubTown);
+}
+
+function initGetZipCode() {
+	if (document.getElementById("zipCodeInput").value >0) {
+		if (document.getElementById("zipCodeInput").value <100000) {
+			gameData.clubZipCode = document.getElementById("zipCodeInput").value;
+		}
+	}		
+	console.log("gameData.clubZipCode", gameData.clubZipCode);
+}
+
+function initSubmitCity() {
+	let testCity = true;
+	if (gameData.clubZipCode == -1) {
+		testCity = false;
+	}
+	if (gameData.clubTown == -1) {
+		testCity = false;
+	}
+	console.log("City: ", gameData.clubZipCode, gameData.clubTown, testCity);
+	return testCity;
+}
+
+
+function initGetClubNumber() {
+	gameData.clubNumber = document.getElementById("clubNumberInput").value;
+	console.log("gameData.clubNumber", gameData.clubNumber);
+}
+
+function generateRandomClubName() {
+	gameData.clubPrefix = clubPrefix[Math.floor(Math.random()*clubPrefix.length)];
+	if(Math.random()>0.7){
+		gameData.clubName = clubMiddle[Math.floor(Math.random()*clubMiddle.length)] + " ";
+	} else {
+		gameData.clubName = -1;
+	}
+	if(Math.random()>0.8){
+		gameData.clubNumber = "0" + (Math.floor(Math.random()*9)+1);
+	} else {
+		gameData.clubNumber = -1;
+	}
+}
+
 
 //////////////////////////////////////////////////
 ///// Bookkeeping
@@ -447,7 +539,7 @@ function clubBuyTicketVendor(vendorClub) {
 	if (vendorClub.cash >= ticketVendorPrice[vendorClub.ticketVendor]) {
 		clubPay(vendorClub, ticketVendorPrice[vendorClub.ticketVendor]);
 		vendorClub.ticketVendor++;
-		vendorClub.ticketVendorRate++;
+		//vendorClub.ticketVendorRate++;
 	}
 };
 
@@ -538,19 +630,26 @@ function getLeagueDemand(ticketClub, ticketLeague) {
 	while(demand == -1) {
 		for (getMatch = 0; getMatch<ticketLeague.gameDay[demandGameDay].length; getMatch++){
 			if (ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]] == ticketClub){
-				homeDemand = ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].reputation * HOMEDEMANDFACTOR;
+				homeDemand = Math.pow(ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].reputation, HOMEREPUTATIONEXPONENT) * HOMEDEMANDFACTOR;
 				if (ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].isHuman){ 
-					//console.log("homeDemand reputation: ", homeDemand);
+					console.log("homeDemand reputation: ", homeDemand);
 				}
 				homeDemand *= ((ticketLeague.clubs.length + POSITIONDEMANDSMOOTH - ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].leaguePosition)/(ticketLeague.clubs.length + POSITIONDEMANDSMOOTH)) * HOMEPOSITIONDEMANDFACTOR;
 				if (ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].isHuman){ 
-					//console.log("homeDemand after position: ", ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].leaguePosition, homeDemand);
+					
 				}
-				guestDemand = ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][1]].reputation * GUESTDEMANDFACTOR;
+				guestDemand = Math.pow(ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][1]].reputation,GUESTREPUTATIONEXPONENT) * GUESTDEMANDFACTOR;
+				if (ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].isHuman){
+					//
+				}
 				guestDemand *= ((ticketLeague.clubs.length - ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][1]].leaguePosition + POSITIONDEMANDSMOOTH)/(ticketLeague.clubs.length + POSITIONDEMANDSMOOTH)) * GUESTPOSITIONDEMANDFACTOR;
 				demand = homeDemand + guestDemand;
 				if (ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].isHuman){
-					//
+					if (ticketLeague.clubs[ticketLeague.gameDay[demandGameDay][getMatch][0]].isHuman){
+						console.log("homeDemand after position: ", homeDemand);
+						console.log("guestDemand: ", guestDemand);
+						console.log("demand: ", demand);
+					}
 				}
 				//GUESTREPUTATIONDEMANDFACTOR;
 			}
@@ -628,7 +727,7 @@ function getPerimeterAdvertisingMonthlyBalance(nMClub, deltaLevel) {
 	if((nMClub.perimeterAdvertising + deltaLevel)>0) {
 		if(nMClub.isHuman) {
 			//Einnahmen(Stufe;2)*POTENZ(Stufe;2,5)
-			console.log("Einnahmen: ", getPerimeterAdvertisingMonthlyRevenue(nMClub,0), " Kosten: ", getPerimeterAdvertisingMonthlyCost(nMClub,0), " Balance: ", getPerimeterAdvertisingMonthlyRevenue(nMClub,0) - getPerimeterAdvertisingMonthlyCost(nMClub,0));
+			//console.log("Einnahmen: ", getPerimeterAdvertisingMonthlyRevenue(nMClub,0), " Kosten: ", getPerimeterAdvertisingMonthlyCost(nMClub,0), " Balance: ", getPerimeterAdvertisingMonthlyRevenue(nMClub,0) - getPerimeterAdvertisingMonthlyCost(nMClub,0));
 		}
 		return getPerimeterAdvertisingMonthlyRevenue(nMClub, deltaLevel) - getPerimeterAdvertisingMonthlyCost(nMClub, deltaLevel);
 	} else {
@@ -640,7 +739,7 @@ function getPerimeterAdvertisingMonthlyRevenue(nMClub, deltaLevel) {
 	if((nMClub.perimeterAdvertising + deltaLevel)>0) {
 		if(nMClub.isHuman) {
 			//Einnahmen =POTENZ(reputation;2)*POTENZ(Stufe;2,5)*0,4
-			console.log("Reputation", nMClub.reputation, "Einnahmen", Math.pow(nMClub.reputation, PERIMETERADVERTISINGREPUTATIONEFFICIENCY)*Math.pow(nMClub.perimeterAdvertising + deltaLevel, PERIMETERADVERTISINGLEVELEXPONENT)*PERIMETERADVERTISINGREVENUEFACTOR);
+			//console.log("Reputation", nMClub.reputation, "Einnahmen", Math.pow(nMClub.reputation, PERIMETERADVERTISINGREPUTATIONEFFICIENCY)*Math.pow(nMClub.perimeterAdvertising + deltaLevel, PERIMETERADVERTISINGLEVELEXPONENT)*PERIMETERADVERTISINGREVENUEFACTOR);
 		}
 		return Math.pow(nMClub.reputation, PERIMETERADVERTISINGREPUTATIONEFFICIENCY)*Math.pow((nMClub.perimeterAdvertising + deltaLevel), PERIMETERADVERTISINGLEVELEXPONENT)*PERIMETERADVERTISINGREVENUEFACTOR;
 	} else {
@@ -652,7 +751,7 @@ function getPerimeterAdvertisingMonthlyCost(nMClub, deltaLevel) {
 	if((nMClub.perimeterAdvertising + deltaLevel)>0) {
 		if(nMClub.isHuman) {
 			//Einnahmen =POTENZ(reputation;2)*POTENZ(Stufe;2,5)*0,4
-			console.log(Math.pow((nMClub.perimeterAdvertising + deltaLevel), PERIMETERADVERTISINGCOSTEXPONENT)*PERIMETERADVERTISINGCOSTMULTIPLIER*(nMClub.perimeterAdvertising + deltaLevel));
+			//console.log(Math.pow((nMClub.perimeterAdvertising + deltaLevel), PERIMETERADVERTISINGCOSTEXPONENT)*PERIMETERADVERTISINGCOSTMULTIPLIER*(nMClub.perimeterAdvertising + deltaLevel));
 		}
 		//Kosten POTENZ(Stufe;3,5)*200*Stufe =POTENZ(C$20;3,5)*200*C$20
 		return Math.pow((nMClub.perimeterAdvertising + deltaLevel), PERIMETERADVERTISINGCOSTEXPONENT)*PERIMETERADVERTISINGCOSTMULTIPLIER*(nMClub.perimeterAdvertising + deltaLevel);
@@ -1242,7 +1341,7 @@ function renderPerimeterAdvertisingCard(cPerimeterAdvertising) {
 							renderPerimeterAdvertisingCardString += "Current advertising";
 						renderPerimeterAdvertisingCardString += tableCellEnd;
 						renderPerimeterAdvertisingCardString += tableCellStart;							
-							renderPerimeterAdvertisingCardString += perimeterAdvertisingString[cPerimeterAdvertising.perimeterAdvertising];
+							renderPerimeterAdvertisingCardString += cPerimeterAdvertising.perimeterAdvertising//perimeterAdvertisingString[cPerimeterAdvertising.perimeterAdvertising];
 						renderPerimeterAdvertisingCardString += tableCellEnd;
 						renderPerimeterAdvertisingCardString += tableCellStart;
 							renderPerimeterAdvertisingCardString += "Monthly balance";
@@ -1432,24 +1531,7 @@ function renderCoachCard(cCoachCard) {
 
 
 
-/*
-function renderYouthAcademyCard(renderClub) {
-	renderYouthAcademyCardString = cardStart50;
-		renderYouthAcademyCardString += cardHeaderStart;
-			renderYouthAcademyCardString += "Youth Academy";
-		renderYouthAcademyCardString += divEnd;
-		renderYouthAcademyCardString += cardBodyStart;
-			renderYouthAcademyCardString += "Upgrade Cost: " + youthAcademyPrice[renderClub.youthAcademy].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "<br />";
-			if (renderClub.cash >= youthAcademyPrice[renderClub.youthAcademy]) {
-				renderYouthAcademyCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"upgradeYouthAcademy\">"+youthAcademyString[renderClub.youthAcademy+1]+"</button>";
-			} else {
-				renderYouthAcademyCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" disabled>"+youthAcademyString[renderClub.youthAcademy+1]+"</button>";
-			}			
-		renderYouthAcademyCardString += divEnd;
-	renderYouthAcademyCardString += divEnd + divEnd;
-	return renderYouthAcademyCardString;
-};
-*/
+
 
 function renderYouthAcademyCard(cYAcademyCard) {
 	//Card start
@@ -1496,7 +1578,7 @@ function renderYouthAcademyCard(cYAcademyCard) {
 						if (cYAcademyCard.cash >= youthAcademyPrice[cYAcademyCard.youthAcademy+1]) {
 							renderYouthAcademyCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"upgradeYouthAcademy\">" + youthAcademyPrice[cYAcademyCard.youthAcademy+1].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "</button>";
 						} else {
-							renderYouthAcademyCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" disabled>Downgrade youth academy</button>";
+							renderYouthAcademyCardString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"upgradeYouthAcademy\" disabled>" + youthAcademyPrice[cYAcademyCard.youthAcademy+1].toLocaleString('de-DE', {style:'currency', currency:'EUR'}) + "</button>";
 						}	
 						renderYouthAcademyCardString += tableCellEnd;
 					renderYouthAcademyCardString += tableRowEnd;
@@ -1531,31 +1613,8 @@ function renderYouthAcademyCard(cYAcademyCard) {
 
 
 function setStadiumMenu (cStadium) {
-	renderClubMenuString = cardStart50;
-		renderClubMenuString += cardHeaderStart;
-			renderClubMenuString += "Stadium";
-		renderClubMenuString += divEnd;
-		renderClubMenuString += cardBodyStart;
-			renderClubMenuString += "Capacity "+ cStadium.stadium.capacity + "<br />";
-			if (cStadium.stadiumOccupationSeasonGame.length>0) {
-				renderClubMenuString += "Ticket sold last match: " + cStadium.stadiumOccupationSeasonGame[cStadium.stadiumOccupationSeasonGame.length-1] + "<br />";
-			} else {
-				renderClubMenuString += "Ticket sold last match: First match<br />";
-			}
-			renderClubMenuString += "<div class=\"progress\">";
-			renderClubMenuString += "<div class=\"progress-bar"
-			if ((cStadium.stadium.seatsSold/cStadium.stadium.capacity)>0.75) {
-				if ((cStadium.stadium.seatsSold/cStadium.stadium.capacity)==1) {
-					renderClubMenuString += " bg-danger";
-				} else {
-					renderClubMenuString += " bg-warning";
-				}
-			}
-			renderClubMenuString += "\" role=\"progressbar\" style=\"width:" + cStadium.stadiumOccupationSeasonGame[cStadium.stadiumOccupationSeasonGame.length-1]/cStadium.stadium.capacity*100 + "%\" aria-valuenow=\""+ cStadium.stadium.seatsSold + "\" aria-valuemin=\"0\" aria-valuemax=\"" + cStadium.stadium.capacity + "\"></div>";
-			renderClubMenuString += divEnd;
-		renderClubMenuString += divEnd;
-	renderClubMenuString += divEnd + divEnd;
-	renderClubMenuString += cardStart50;
+	let renderClubMenuString = stadiumSummaryCard(cStadium);
+	renderClubMenuString += cardStart;
 		renderClubMenuString += cardHeaderStart;
 		renderClubMenuString += "Sell Tickets";
 		renderClubMenuString += divEnd;
@@ -1563,7 +1622,7 @@ function setStadiumMenu (cStadium) {
 			renderClubMenuString += "<button class=\"btn btn-primary\" onmouseup=\"mUp(this)\" id=\"sellTicket\">sell Ticket</button>";
 		renderClubMenuString += divEnd;
 	renderClubMenuString += divEnd + divEnd;
-	renderClubMenuString += cardStart50;
+	renderClubMenuString += cardStart;
 		renderClubMenuString += cardHeaderStart;
 			renderClubMenuString += "Upgrade Ticket Sale";
 		renderClubMenuString += divEnd;
@@ -1578,7 +1637,7 @@ function setStadiumMenu (cStadium) {
 	renderClubMenuString += divEnd + divEnd;
 	//Tribünen ausbauen
 	for (i=0;i<4;i++) {
-		renderClubMenuString += cardStart50;
+		renderClubMenuString += cardStart;
 			renderClubMenuString += cardHeaderStart;
 			renderClubMenuString += terraceNameString[i];
 		renderClubMenuString += divEnd;
@@ -1602,6 +1661,58 @@ function setStadiumMenu (cStadium) {
 	}
 	return renderClubMenuString;
 }
+
+
+
+function stadiumSummaryCard(cStadiumCard) {
+	let cStadiumCardString = cardStart;
+	//Card header
+		cStadiumCardString += cardHeaderStart;
+			cStadiumCardString += "<b>Stadium</b>";
+		cStadiumCardString += divEnd;
+		//Card body
+		cStadiumCardString += cardBodyStart;	
+			//Table Start
+			cStadiumCardString += tableStart;
+				//Tablehead
+				//Table body
+				cStadiumCardString += tBodyStart;
+					cStadiumCardString += tableRowStart;
+						cStadiumCardString += tableCellStart;
+							cStadiumCardString += "Capacity "+ cStadiumCard.stadium.capacity + "<br />";
+						cStadiumCardString += tableCellEnd;
+						cStadiumCardString += tableCellStart;
+							if (cStadiumCard.stadiumOccupationSeasonGame.length>0) {
+								cStadiumCardString += "Ticket sold last match: " + cStadiumCard.stadiumOccupationSeasonGame[cStadiumCard.stadiumOccupationSeasonGame.length-1];
+							} else {
+								cStadiumCardString += "Ticket sold last match: First match<br />";
+							}
+						cStadiumCardString += tableCellEnd;
+					cStadiumCardString += tableRowEnd;					
+					cStadiumCardString += tableRowStart;
+						cStadiumCardString += tableCellStartSpan2;
+							cStadiumCardString += "<div class=\"progress\">";
+								cStadiumCardString += "<div class=\"progress-bar"
+									if ((cStadiumCard.stadium.seatsSold/cStadiumCard.stadium.capacity)>0.75) {
+										if ((cStadiumCard.stadium.seatsSold/cStadiumCard.stadium.capacity)==1) {
+											cStadiumCardString += " bg-danger";
+										} else {
+											cStadiumCardString += " bg-warning";
+										}
+									}
+									cStadiumCardString += "\" role=\"progressbar\" style=\"width:" + cStadiumCard.stadiumOccupationSeasonGame[cStadiumCard.stadiumOccupationSeasonGame.length-1]/cStadiumCard.stadium.capacity*100 + "%\" aria-valuenow=\""+ cStadiumCard.stadium.seatsSold + "\" aria-valuemin=\"0\" aria-valuemax=\"" + cStadiumCard.stadium.capacity + "\">";
+								cStadiumCardString += divEnd;
+							cStadiumCardString += divEnd;
+						cStadiumCardString += tableCellEnd;
+					cStadiumCardString += tableRowEnd;
+				cStadiumCardString += tBodyEnd;
+			cStadiumCardString += tableEnd;
+		cStadiumCardString += divEnd;
+	cStadiumCardString += divEnd + divEnd;
+	return cStadiumCardString;
+}
+
+
 
 function renderStatisticsMenu(cRenderFinanceMenu) {	
 	renderClubMenuString = cardStart50;
@@ -1649,6 +1760,147 @@ function setClubMenu() {
 	clubPrintTable = function(cPTable) {
 		return (cPTable.name + " " + cPTable.leaguePoints + " " + cPTable.leagueGoalsScored + " " + cPTable.leagueGoalsConceded);
 	}
+	
+	
+function renderGetCityName() {
+	//Card start
+	let initHTMLString = cardStart;
+		//Card header
+		initHTMLString += cardHeaderStart;
+			initHTMLString += "<b>Choose your club home town</b>";
+		initHTMLString += divEnd;
+		//Card body
+		initHTMLString += cardBodyStart;	
+			initHTMLString += "Let's find a home town for your club!<br /><br />";
+			initHTMLString += "What's the name of the city?<br />";
+			if (gameData.clubTown == -1) {
+				initHTMLString += "<form><div class=\"form-group\"><input type=\"text\" placeholder=\"Type city name...\" id=\"cityNameInput\" class=\"form-control\"></div>"
+								+"<input type=\"button\" value=\"Submit city\" onmouseup=\"mUp(this)\"  id=\"cityNameInputButton\" class=\"btn btn-primary\">";
+			} else {
+				initHTMLString += "<form><div class=\"form-group\"><input type=\"text\" placeholder=\"" + gameData.clubTown + "\" id=\"cityNameInput\" class=\"form-control\"></div>"
+								+"<input type=\"button\" value=\"Submit city\" onmouseup=\"mUp(this)\"  id=\"cityNameInputButton\" class=\"btn btn-primary\">";
+			}
+			initHTMLString += "    <input type=\"button\" value=\"Random city\" onmouseup=\"mUp(this)\"  id=\"randomCityButton\" class=\"btn btn-primary\"></form>";
+			initHTMLString += "The zip code is needed to find your regional league.<br />";
+			if (gameData.clubZipCode == -1) {
+				initHTMLString += "<form><div class=\"form-group\"><input type=\"number\" placeholder=\"enter PLZ\" id=\"zipCodeInput\" class=\"form-control\"></div>"
+								+"<input type=\"button\" value=\"Submit ZIP code\" onmouseup=\"mUp(this)\"  id=\"zipCodeInputButton\" class=\"btn btn-primary\"></form>";
+			} else {
+				initHTMLString += "<form><div class=\"form-group\"><input type=\"number\" placeholder=\"" + gameData.clubZipCode + "\" id=\"zipCodeInput\" class=\"form-control\"></div>"
+								+"<input type=\"button\" value=\"Submit ZIP code\" onmouseup=\"mUp(this)\"  id=\"zipCodeInputButton\" class=\"btn btn-primary\"></form>";
+			}
+			initHTMLString += "<br /><br />Do you want to continue with this city?<br />";
+			initHTMLString += "<strong>" + gameData.clubZipCode + " " + gameData.clubTown + "</strong><br />";
+			let buttonDisabled = "";
+			if (gameData.clubTown == -1) {
+				buttonDisabled = "disabled";
+			}			
+			if (gameData.clubZipCode == -1) {
+				buttonDisabled = "disabled";
+			}				
+			initHTMLString += "<input type=\"button\" value=\"Confirm your city\" onmouseup=\"mUp(this)\"  id=\"confirmCityButton\" class=\"btn btn-primary\"" + buttonDisabled +">";
+		initHTMLString += divEnd;
+	initHTMLString += divEnd;
+	return initHTMLString;
+}
+
+
+function renderGetClubName() {
+	//Card start
+	let initHTMLString = cardStart;
+		//Card header
+		initHTMLString += cardHeaderStart;
+			initHTMLString += "<b>Choose your club name</b>";
+		initHTMLString += divEnd;
+		//Card body
+		initHTMLString += cardBodyStart;	
+			//Table Start
+			initHTMLString += tableStart;
+				//Tablehead
+				//Table body
+				initHTMLString += "Let's find a name for your club!<br /><br />";
+				initHTMLString += tBodyStart;
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += dropdownStart
+							initHTMLString += "Will it be an 1. FC or a VfB?<br />";
+							if (gameData.clubPrefix == -1) {
+								initHTMLString += setDropdownButton("chooseClubPrefix", "Choose prefix");
+							} else {
+								initHTMLString += setDropdownButton("chooseClubPrefix", gameData.clubPrefix);
+							}
+							initHTMLString += setDrowpdownMenu("chooseClubPrefix");
+							for (lL=0; lL < clubPrefix.length; lL++) {
+								initHTMLString += setDropdownItemID(lL, clubPrefix[lL].toString(), "chooseClubPrefix");
+							}
+						initHTMLString += divEnd;
+						initHTMLString += tableCellEnd;
+						initHTMLString += tableCellStart;
+						initHTMLString += dropdownStart
+							initHTMLString += "Add a Fortuna or a Maccabi. This one is optional.<br />";
+							if (gameData.clubName == -1) {
+								initHTMLString += setDropdownButton("chooseClubName", "Choose club name");
+							} else {
+								initHTMLString += setDropdownButton("chooseClubName", gameData.clubName);
+							}							
+							initHTMLString += setDrowpdownMenu("chooseClubName");
+							for (lL=0; lL < clubMiddle.length; lL++) {
+								initHTMLString += setDropdownItemID(lL, clubMiddle[lL].toString(), "chooseClubName");
+							}
+						initHTMLString += divEnd;
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;			
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += "Maybe add a founding year?<br />";
+						initHTMLString += "<form><div class=\"form-group\"><input id=\"clubNumberInput\" type=\"text\" placeholder=\"04\" id=\"clubNumberInput\" class=\"form-control\"></div>"
+								+"<input type=\"button\" value=\"Confirm club number\" onmouseup=\"mUp(this)\"  id=\"acceptClubNumberButton\" class=\"btn btn-primary\"></form>";
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;	
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += "Or generate a random name name<br />";
+						initHTMLString += "<strong>" + gameData.clubPrefix + " ";
+						if (gameData.clubName != -1) {
+							initHTMLString += gameData.clubName + " ";
+						}
+						initHTMLString += gameData.clubTown;
+						if (gameData.clubNumber != -1) {
+							initHTMLString += " " + gameData.clubNumber;
+						}
+						initHTMLString += "</strong><br />";
+						initHTMLString += "<input type=\"button\" value=\"Generate random name\" onmouseup=\"mUp(this)\"  id=\"generateRandomClubNameButton\" class=\"btn btn-primary\">";
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;	
+					initHTMLString += tableRowStart;
+						initHTMLString += tableCellStart;
+						initHTMLString += "Do you want to continue with this name?<br />";
+						initHTMLString += "<strong>" + gameData.clubPrefix + " ";
+						if (gameData.clubName != -1) {
+							initHTMLString += gameData.clubName + " ";
+						}
+						initHTMLString += gameData.clubTown;
+						if (gameData.clubNumber != -1) {
+							initHTMLString += " " + gameData.clubNumber;
+						}
+						initHTMLString += "</strong><br />";
+						let buttonDisabled = "";
+						if (gameData.clubPrefix == -1) {
+							buttonDisabled = "disabled";
+						}
+						initHTMLString += "<input type=\"button\" value=\"Confirm club name\" onmouseup=\"mUp(this)\"  id=\"acceptClubNameButton\" class=\"btn btn-primary\"" + buttonDisabled + ">";
+						initHTMLString += tableCellEnd;
+					initHTMLString += tableRowEnd;					
+
+				initHTMLString += tBodyEnd;
+			initHTMLString += tableEnd;
+				
+		initHTMLString += divEnd;
+	initHTMLString += divEnd;
+	return initHTMLString;
+}
+
+
 
 
 perimeterAdvertisingString = [

@@ -183,7 +183,7 @@ function extendKickerContractConfirmation(getKicker) {
 
 function renderPlayerFormation(getKicker) {
 	
-	mainMenuString = cardStart50;
+	mainMenuString = cardStart;
 		mainMenuString += cardHeaderStart;
 			mainMenuString += "<div id=\"selectSingleKicker\" value="+ getKicker.playerId + ">" + getKicker.firstname + " " + getKicker.lastname + "</div>";
 		mainMenuString += divEnd;
@@ -197,7 +197,7 @@ function renderPlayerFormation(getKicker) {
 				mainMenuString += "<button class=\"btn btn-secondary\" onmouseup=\"mUp(this)\" id=\"switchPosition\" value="+ getKicker.playerId + " >" + positionNames[getKicker.position] + "</button>";
 			}
 		mainMenuString += divEnd;
-	mainMenuString += divEnd + divEnd;
+	mainMenuString += divEnd;
 	return mainMenuString;
 };
 

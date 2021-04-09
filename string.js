@@ -99,6 +99,7 @@ var thEnd = "</th>";
 var tBodyStart = "<tbody>";
 var tBodyEnd = "</tbody>";
 var tableCellStart = "<td>";
+var tableCellStartSpan2 = "<td colspan=\"2\">";
 var tableCellEnd = "</td>";
 
 
@@ -157,11 +158,46 @@ var leagueNames = [
 
 		
 var positionNames = [
-		"Torwart",
-		"Abwehr",
-		"Mittelfeld",
-		"Sturm",
-		"Bank",
-		"Nicht im Kader",
-		"Verletzt"
-		];
+	"Keeper",
+	"Defence",
+	"Midfield",
+	"Attack",
+	"Bench",
+	"Not in the squad",
+	"Injured"
+];
+
+var difficultyStrings = [
+	"Easy Peasy",
+	"Easy",
+	"Medium",
+	"Hard"
+];	
+
+/*
+//none
+var CHOOSENEW = -1;
+//4 3 3
+var F433 = "4-3-3";
+//3 4 3
+var F343 = "3-4-3";
+//4 4 2
+var F442 = "4-4-2";
+//4 5 1
+var F451 = "4-5-1";
+//3 5 2
+var F352 = "3-5-2";
+//3 6 1
+var F361 = "3-6-1";
+*/
+
+var formations = [
+	"keine",
+	"4-3-3",
+	"3-4-3",
+	"4-4-2",
+	"4-5-1",
+	"3-5-2",
+	"3-6-1"
+];
+	

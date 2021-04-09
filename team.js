@@ -10,6 +10,7 @@ var team = function(isHuman, leagueLevel) {
 		this.players.push(newKicker);
 	}
 	//if(this.isHuman == false) {
+	this.chosenFormation = CHOOSENEW;
 	this.formation = pickFormation(CHOOSENEW);
 	setTeamFormation(this);
 	//}
@@ -267,14 +268,18 @@ function teamNextSeason(teamNextSeason, clubNextSeason) {
 	if(teamNextSeason.players.length<11) {
 		fillUpTeam(teamNextSeason);
 	}
-	let newFormationTest = 0;
-	if(clubNextSeason.mood<0) {
-		newFormationTest = 0.4;
-	} else {
-		newFormationTest = 0.75;
-	}
-	if(newFormationTest>Math.random()) {
-		teamNextSeason.formation = Math.floor(Math.random() * 6);
+	if (teamNextSeason.chosenFormation == CHOOSENEW){
+		let newFormationTest = 0;
+		if(clubNextSeason.mood<0) {
+			newFormationTest = 0.4;
+		} else {
+			newFormationTest = 0.75;
+		}
+		if(newFormationTest<Math.random()) {
+			pickFormation(clubNextSeason);
+		} else {
+			pickFormation(clubNextSeason)
+		}
 	}
 	setTeamFormation(teamNextSeason);
 };
@@ -323,23 +328,69 @@ function renderTeamMenu() {
 }
 
 
-function renderTeamFormation(rTF) {
-	renderTeamString = cardStart50;
-		renderTeamString += cardHeaderStart;
-			renderTeamString += "<strong>Team</strong>";
-		renderTeamString += divEnd;
-		renderTeamString += cardBodyStart;
-			renderTeamString += "Spielstärke: " + rTF.teamPlaymaking + "<br />";
-			renderTeamString += "Defensiv: " + rTF.teamDefense + "<br />";
-			renderTeamString += "Offensiv: " + rTF.teamOffense + "<br />";
-			renderTeamString += renderTacticalFormation(rTF);
-		renderTeamString += divEnd;
-	renderTeamString += divEnd;
+
+function renderTeamFormationStats(rTF) {
+	let renderTeamFormationStatsString = cardStart100SetID("teamStats");
+		renderTeamFormationStatsString += cardHeaderStart;
+			renderTeamFormationStatsString += "<strong>Team stats</strong>";
+		renderTeamFormationStatsString += divEnd;
+		renderTeamFormationStatsString += cardBodyStart;
+			renderTeamFormationStatsString += "Playmaking: " + rTF.teamPlaymaking + "<br />";
+			renderTeamFormationStatsString += "Defense: " + rTF.teamDefense + "<br />";
+			renderTeamFormationStatsString += "Offense: " + rTF.teamOffense + "<br />";
+		renderTeamFormationStatsString += divEnd;
+		renderTeamFormationStatsString += divEnd;
+	renderTeamFormationStatsString += divEnd;
+	return renderTeamFormationStatsString;
+};
+
+function renderTeamFormationPickFormation(rTF) {
+	let renderTeamFormationPickFormationString = cardStart100SetID("teamPickFormation");
+	renderTeamFormationPickFormationString += cardHeaderStart;
+		renderTeamFormationPickFormationString += "<strong>Pick team formation</strong>";
+	renderTeamFormationPickFormationString += divEnd;
+	renderTeamFormationPickFormationString += cardBodyStart;
+		renderTeamFormationPickFormationString += "Current formation: " + renderTacticalFormation(rTF) + "<br />";
+		renderTeamFormationPickFormationString += dropdownStart				
+		renderTeamFormationPickFormationString += setDropdownButton("chooseFormation", "Choose formation ");
+		renderTeamFormationPickFormationString += setDrowpdownMenu("chooseFormation");
+		for (lL=0; lL < formations.length; lL++) {
+			renderTeamFormationPickFormationString += setDropdownItemID(lL, formations[lL], "chooseFormation");
+		}				
+		renderTeamFormationPickFormationString += "<br />" + divEnd + divEnd;
+	renderTeamFormationPickFormationString += divEnd + divEnd;
+	return renderTeamFormationPickFormationString;
+};
+
+function renderTeamFormationPlayers(rTF) {
+	console.log("formationKickerList");
+	let renderTeamFormationPlayersString = setDivID("formationKickerList");
 	for (i=0; i< rTF.players.length; i++) {
-		renderTeamString += renderPlayerFormation(rTF.players[i]);
+		renderTeamFormationPlayersString += renderPlayerFormation(rTF.players[i]);
 	}
+	renderTeamFormationPlayersString += divEnd;
+	if(gameData.isTest == false) {
+		gameData.isTest = true;
+		console.log(renderTeamFormationPlayersString);
+	}
+	return renderTeamFormationPlayersString;
+};
+
+
+function renderTeamFormation(rTF) {
+	renderTeamString = renderTeamFormationPickFormation(rTF);
+	renderTeamString += renderTeamFormationStats(rTF);
+	renderTeamString += renderTeamFormationPlayers(rTF);
 	return renderTeamString;
 };
+
+
+function refreshTeamFormation(rTF) {
+	document.getElementById("teamStats").innerHTML = renderTeamFormationStats(rTF);
+	document.getElementById("formationKickerList").innerHTML = renderTeamFormationPlayers(rTF);
+};
+
+
 
 function renderTeamTraining(rTT) {
 	renderTeamString = cardStart50;

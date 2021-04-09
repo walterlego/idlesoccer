@@ -52,10 +52,11 @@ function resetLeague(leagueLevels, leagueDivisions) {
 
 
 //leagues
-var initleagues = function() {
+var initLeagues = function() {
 	gameData.leagues=[];
 	for (leagueLevels=0; leagueLevels<gameData.leagueStructure.length; leagueLevels++) {
 		gameData.leagues[leagueLevels]=[];
+		console.log("Liga ", leagueLevels);
 		for (leagueDivisions=0; leagueDivisions<gameData.leagueStructure[leagueLevels][0]; leagueDivisions++) {
 			if (leagueLevels == gameData.player.club.leagueLevel) {
 				if (leagueDivisions == gameData.player.club.leagueDivision) {
@@ -69,6 +70,8 @@ var initleagues = function() {
 			}
 		}
 	}
+	console.log("Liga init-complete");
+	return true;
 };
 
 function initleagueSchedule(initLeagueS){
@@ -487,7 +490,8 @@ function printGameDay() {
 
 
 function refreshLeagueViewMenu() {
-	document.getElementById("leagueTableCard").innerHTML = refreshLeagueTableCard();
+	document.getElementById("leagueTableCard").innerHTML = renderLeagueTableCard();
+	//document.getElementById("leagueTableCard").innerHTML = refreshLeagueTableCard();
 }
 
 
@@ -505,13 +509,12 @@ function renderPrintGameDayMenu() {
 	renderClubMenuString += divEnd;
 	renderClubMenuString += setDivID("gameDayCard");
 	renderClubMenuString += renderGameDayCard();
-	//console.log(renderGameDayCard());
 	renderClubMenuString += divEnd;
 	return renderClubMenuString;
 };
 
 function refreshGameDayMenu() {
-	document.getElementById("gameDayCard").innerHTML = refreshGameDayCard();
+	//document.getElementById("gameDayCard").innerHTML = refreshGameDayCard();
 }
 
 
@@ -521,7 +524,7 @@ function refreshGameDayMenu() {
 
 
 function renderChooseLeagueCard() {
-	let chooseLeagueCardString = cardStart50SetID("chooseLeagueCard");
+	let chooseLeagueCardString = cardStart100SetID("chooseLeagueCard");
 		chooseLeagueCardString += cardHeaderStart;
 			chooseLeagueCardString += strong + "Choose League" + strongEnd;
 		chooseLeagueCardString += divEnd;
@@ -580,7 +583,7 @@ function renderLeagueTableCard() {
 	leagueTableCardString += divEnd;
 	return leagueTableCardString;
 };
-
+/*
 function refreshLeagueTableCard() {
 	let leagueTableCardString = cardStart100SetID("leagueTableCard");
 		leagueTableCardString += cardHeaderStart;
@@ -595,6 +598,7 @@ function refreshLeagueTableCard() {
 	leagueTableCardString += divEnd;
 	return leagueTableCardString;
 };
+*/
 
 function renderGameDayCard() {
 	let leagueGameDayString = cardStart100SetID("gameDayCard");
