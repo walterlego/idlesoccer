@@ -61,6 +61,7 @@ It's mostly missing balancing and missing features.
 Naming clubs after quarters, not the whole town for lower league clubs. (Only done for Cologne and Berlin)
 Shirt sponsor
 Other sponsorships
+Merchandise
 PLayer transfers
 Training facilities.
 Fitness level and regeneration.
@@ -86,5 +87,6 @@ National or Regional cups
 
 ### stadium ###
 Maintenance
+Catering
 
 Enjoy and give me some feedback!
