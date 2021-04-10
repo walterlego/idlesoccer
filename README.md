@@ -16,14 +16,17 @@ You can coose a name for you. You can choose your club's name and the league you
 ### Club ###
 There's a club. Each club has a coach, a team and takes part in a league.
 The club has
-Name 
-Team
-Coach - a better coach speeds up players skill improvement. the coach gets salary once a month.
-Youth academy - a better academy produces more talented players with better skills.
+# Name # - 
+# Team # - 
+# Coach #
+A better coach speeds up each player's skill improvement. The coach gets salary once a month.
+# Youth academy # 
+A better academy produces more talented players with better skills.
 Reputation - the more successful the club, the higher the reputation. It gets upfates after each season.
 cash value - not important yet as there are no transfers.
-Stadium
-Marketing - At the moment Marketing consists of perimeter advertising. The revenue grows with increasing club reputation. Marketing has a monthly cost. IMprove 
+# Stadium #
+# Marketing # 
+At the moment Marketing consists of perimeter advertising. The revenue grows with increasing club reputation. Marketing has a monthly cost. The revenue is based on the clubs reputation. For each lvel of reputation there is an optimal marketing level.
 
 ### Stadium ### 
 There are four terraces. You can upgrade terrace capacity, but it isn't balanced yet.
